@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project Version="3" Minor="2" RunTime="2026-10-14T18:27:11">
+    <Project_Created_Time></Project_Created_Time>
+    <TD_Version>6.2.168116</TD_Version>
+    <Name>receiver_demo</Name>
+    <HardWare>
+        <Family>EG4</Family>
+        <Device>EG4S20BG256</Device>
+        <Speed></Speed>
+    </HardWare>
+    <Source_Files>
+        <Verilog>
+            <File Path="gesture_link_rx.v"><FileInfo><Attr Name="UsedInSyn" Val="true"/><Attr Name="UsedInP&amp;R" Val="true"/><Attr Name="BelongTo" Val="design_1"/><Attr Name="CompileOrder" Val="1"/></FileInfo></File>
+            <File Path="receiver_demo.v"><FileInfo><Attr Name="UsedInSyn" Val="true"/><Attr Name="UsedInP&amp;R" Val="true"/><Attr Name="BelongTo" Val="design_1"/><Attr Name="CompileOrder" Val="2"/></FileInfo></File>
+        </Verilog>
+        <ADC_FILE><File Path="receiver_pin.adc"><FileInfo><Attr Name="UsedInSyn" Val="true"/><Attr Name="UsedInP&amp;R" Val="true"/><Attr Name="BelongTo" Val="constraint_1"/><Attr Name="CompileOrder" Val="3"/></FileInfo></File></ADC_FILE>
+        <SDC_FILE><File Path="receiver_timing.sdc"><FileInfo><Attr Name="UsedInSyn" Val="true"/><Attr Name="UsedInP&amp;R" Val="true"/><Attr Name="BelongTo" Val="constraint_1"/><Attr Name="CompileOrder" Val="4"/></FileInfo></File></SDC_FILE>
+    </Source_Files>
+    <FileSets>
+        <FileSet Name="design_1" Type="DesignFiles">
+        </FileSet>
+        <FileSet Name="constraint_1" Type="ConstrainFiles">
+        </FileSet>
+    </FileSets>
+    <TOP_MODULE><LABEL>receiver_demo</LABEL><MODULE>receiver_demo</MODULE><CREATEINDEX>user</CREATEINDEX></TOP_MODULE>
+    <Property>
+    </Property>
+    <Device_Settings>
+    </Device_Settings>
+    <Configurations>
+    </Configurations>
+</Project>
+
+

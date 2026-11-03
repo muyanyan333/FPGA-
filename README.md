@@ -1,5 +1,11 @@
 # FPGA 多功能影音交互系统
 
+## 手势识别 FPGA
+
+手势发送板独立工程位于 [gesture_fpga](gesture_fpga/)。在 TD 中打开 [full_camera_edge_preview.prj](gesture_fpga/src/td_project/full_camera_edge_preview.prj)，对应构建脚本为 `build_camera_gesture_link_seg.tcl`。识别、挥手检测和 UART 发送逻辑分别见 `gesture_classifier.v`、`gesture_swipe.v` 和 `gesture_link_tx.v`。
+
+连接影音主板时，手势板 TX 使用 J2 第 19 脚 GPIOB16（G1），影音主板 RX 使用 J1 第 5 脚 GPIOA4（H13），两板共地。串口为 9600 baud、8N1。主板用左挥、右挥切图。手势包内 `receiver/` 是独立接收演示工程，其接收引脚与影音主板不同。
+
 基于 **HX4S20 / EG4S20BG256** 的 FPGA 多媒体作品，支持 TF 卡图片与音乐播放、HDMI 显示、OV2640 实时预览、ASRPRO 语音控制及 Android 蓝牙双向控制。
 
 ## 功能

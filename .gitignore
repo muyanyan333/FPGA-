@@ -74,3 +74,9 @@ Thumbs.db
 
 # Personal presentation material
 /分享材料/
+
+# Local report revisions and unpacked review bundle
+/FPGA_评委源码审阅包/
+~$*.docx
+/FPGA多模态智能影音交互系统技术报告_*.docx
+!/FPGA多模态智能影音交互系统技术报告_项目同步版.docx
