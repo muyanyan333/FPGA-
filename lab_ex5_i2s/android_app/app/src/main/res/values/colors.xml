@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#071018</color>
+    <color name="panel">#101F2A</color>
+    <color name="panel_alt">#0B1821</color>
+    <color name="line">#294150</color>
+    <color name="text">#EFF8FC</color>
+    <color name="muted">#91A9B7</color>
+    <color name="cyan">#4CE3D2</color>
+    <color name="cyan_dark">#18AFA5</color>
+    <color name="blue">#5DA9FF</color>
+    <color name="danger">#FF6C7A</color>
+</resources>

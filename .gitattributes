@@ -1,0 +1,14 @@
+* text=auto
+*.v text eol=lf
+*.tcl text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.java text eol=lf
+*.gradle text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.hd -text
+*.png binary
+*.jpg binary
+*.enc.v -text

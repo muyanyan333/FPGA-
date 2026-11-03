@@ -1,0 +1,40 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.wangzedong.fpgaimagecontroller'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.wangzedong.fpgaimagecontroller'
+        minSdk 23
+        targetSdk 34
+        versionCode 24
+        versionName '2.1.1'
+    }
+
+    // Keep an existing private key locally; fresh clones use Android's debug key.
+    if (rootProject.file('signing/debug.keystore').exists()) {
+    signingConfigs {
+        debug {
+            storeFile rootProject.file('signing/debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

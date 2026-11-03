@@ -1,0 +1,33 @@
+{
+  "built": "2026-10-21 22:53:12 +08:00",
+  "target": "top_video_player",
+  "final_route_seed": 11,
+  "media": "MVI4 per-frame RGB888 palette, 320x240, 30fps target, cover fit, 48kHz PCM",
+  "real_board_verified": false,
+  "global_setup_wns_ns": -6.129,
+  "global_hold_wns_ns": -1.405,
+  "sdram_setup_wns_ns": 1.45,
+  "sdram_hold_wns_ns": 0.032,
+  "source_sha256": {
+    "lab_ex5_i2s-work\\src\\user_source\\hdl_source\\SD\\spi_master.v": "59b5b4704793266ad4830f12c3a98b2204f14c242a40cd82cfcbc7eff643574c",
+    "lab_ex5_i2s-work\\src\\user_source\\hdl_source\\SD\\sd_card_cmd.v": "1421d6a69762a60ac3361323583bf0aaa4e2798e936456597b7fb8180277965d",
+    "lab_ex5_i2s-work\\src\\user_source\\hdl_source\\SD\\sd_card_top.v": "abd600390d7356aec39bd7af4d4e354613e908c4af1559f56979ced1c74d5824",
+    "lab_ex5_i2s-work\\src\\user_source\\hdl_source\\SD\\sd_card_bmp.v": "b5ca7f986c5f41ab2c4d0ee4ca432d3057d08957c21b2862d8450271bec79006",
+    "lab_ex5_i2s-work\\src\\user_source\\hdl_source\\SD\\bmp_read.v": "a84ddd57bf2d8b28f29021ceb03e17deac3f85fb401e75687485d1aa6ec5e2ef",
+    "lab_ex5_i2s-work\\src\\user_source\\hdl_source\\SD\\exfat_raw_video_reader.v": "0900f9b5093a159a3a111a3afb46d67ac34dc5234f0d7a25197a0b5bb7b5f094",
+    "lab_ex5_i2s-work\\src\\user_source\\hdl_source\\SD\\frame_fifo_read.v": "18f448eee110bc87c9bbbadf9a1cc9444b15e9e0646e0f23671105c883dc8d03",
+    "lab_ex5_i2s-work\\src\\user_source\\hdl_source\\SD\\frame_fifo_write.v": "4f6fbbaf056c2644d1858110cd719ca9ed3946261692e6037ba3f7275e1cd73e",
+    "lab_ex5_i2s-work\\src\\user_source\\hdl_source\\IP\\sys_pll.v": "6c5c831fce013a28f614fad4fc3042213bcca4da57ae157d5040938cf56a3e50",
+    "lab_ex5_i2s-work\\src\\user_source\\hdl_source\\include\\global_def.v": "99af22b2dff48a48f2ef2b57c61a9828332cceed57741daf6acdd86bb4b2bf3d",
+    "lab_ex5_i2s-work\\src\\td_project\\video_quality30.bit": "a1df177f9399fe65cee1a6d0b481e91e60a15f7b5b47abc23bdde97152f6bdb3",
+    "lab_ex5_i2s-work\\src\\td_project\\build_video_quality30.tcl": "9bd8c94dfd2f02c5e93568fd0519736aaeb2c973f2faf6031532fdfebc76c067",
+    "lab_ex5_i2s-work\\src\\td_project\\retry_video_quality30_route.tcl": "ac7ec5dc5d319b051114b3e9b73f02dcf353b0d45fe98d03598f79515f9e7ca2",
+    "lab_ex5_i2s-work\\src\\td_project\\video_quality30_seed7_pr.db": "7c0d14fd478b7a35033026cc5d02cd5b3da959f7bfe8d46acf0efd72e141214b",
+    "tools/prepare_video.py": "8c73ac304d9ee266cfb38d98227883e160f904cac5a84b01bec92088a41cdd22"
+  },
+  "media_sha256": {
+    "00.wav": "3baf6ebb08a93e9c20ac0699224f34d97fb7cde64d9a62cdf6cb094a44f33b65",
+    "01.MVI": "01abfc753b65064410b8dad721ab6875a849b1188e094d999a6960549cbf245f",
+    "video_info.json": "2aa804acb78ee0cdd6bbf04a237fe426fdfdcf9befee9f173fc21a31821f8ef5"
+  }
+}

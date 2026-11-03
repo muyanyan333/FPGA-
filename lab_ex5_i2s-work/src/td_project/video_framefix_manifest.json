@@ -1,0 +1,19 @@
+{
+  "built": "2026-10-21 19:45:52 +08:00",
+  "target": "top_video_player",
+  "media": "MVI3 palette 320x240, 20fps target + 48kHz PCM",
+  "sha256": {
+    "../user_source/hdl_source/SD/frame_fifo_write.v": "4f6fbbaf056c2644d1858110cd719ca9ed3946261692e6037ba3f7275e1cd73e",
+    "../user_source/hdl_source/SD/frame_fifo_read.v": "18f448eee110bc87c9bbbadf9a1cc9444b15e9e0646e0f23671105c883dc8d03",
+    "../user_source/hdl_source/SD/bmp_read.v": "0d3b668ffcea4f62da226e24d3787b449101a0fbf7bd2d2702bdce2580f36ec3",
+    "../user_source/hdl_source/SD/exfat_raw_video_reader.v": "f15256d2dd1137633bcd66c0bdd031caa6518510c76db8eeaf8e37714c710355",
+    "../user_source/hdl_source/include/global_def.v": "99af22b2dff48a48f2ef2b57c61a9828332cceed57741daf6acdd86bb4b2bf3d",
+    "../user_source/hdl_source/IP/sys_pll.v": "6c5c831fce013a28f614fad4fc3042213bcca4da57ae157d5040938cf56a3e50",
+    "../user_source/hdl_source/IP/sys_pll.ipc": "65c15481a2fe327f4e04b6d391b28276a273d1a112eee4e7f1efe082276056f3",
+    "build_video_framefix.tcl": "d96da085277eb2a0f57524f78343d19eca1d2be39e490413b02e0483d76bf437",
+    "video_framefix.bit": "b87f78863b20d039d3fa776609feb22458dfe8c3c0a71009effdd2d0354d8297"
+  },
+  "requires_hardware_validation": true,
+  "global_setup_wns_ns": -6.569,
+  "global_hold_wns_ns": -1.54
+}

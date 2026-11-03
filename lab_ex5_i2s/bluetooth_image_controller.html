@@ -1,0 +1,6002 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#071018">
+  <title>W02 影音控制台</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #071018;
+      --panel: rgba(17, 31, 43, .84);
+      --line: rgba(150, 190, 214, .17);
+      --text: #eff8fc;
+      --muted: #91a9b7;
+      --cyan: #4ce3d2;
+      --blue: #5da9ff;
+      --red: #ff6c7a;
+      --shadow: 0 18px 55px rgba(0, 0, 0, .34);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(44, 125, 151, .24), transparent 36%),
+        radial-gradient(circle at 100% 28%, rgba(72, 91, 184, .18), transparent 35%),
+        var(--bg);
+    }
+    button, input, textarea, select { font: inherit; }
+    button { touch-action: manipulation; }
+    .app { width: min(760px, 100%); margin: auto; padding: 24px 18px 44px; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 22px; }
+    .eyebrow { margin: 0 0 5px; color: var(--cyan); font-size: 12px; font-weight: 800; letter-spacing: .18em; }
+    h1 { margin: 0; font-size: clamp(24px, 7vw, 38px); letter-spacing: -.04em; }
+    .status-pill { flex: none; padding: 9px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: rgba(8, 17, 25, .65); font-size: 13px; }
+    .status-pill::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: #677985; }
+    .status-pill.online { color: #cafff9; border-color: rgba(76, 227, 210, .4); }
+    .status-pill.online::before { background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
+    .card { border: 1px solid var(--line); border-radius: 22px; background: var(--panel); box-shadow: var(--shadow); backdrop-filter: blur(14px); padding: 18px; margin-top: 14px; }
+    .connect-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+    .connect-actions { display: flex; gap: 8px; }
+    .primary, .secondary, .control, .image-btn {
+      border: 0; border-radius: 14px; min-height: 48px; color: var(--text); cursor: pointer; transition: transform .12s, filter .12s, border-color .12s;
+    }
+    button:active { transform: scale(.975); }
+    .primary { padding: 0 18px; color: #031518; background: linear-gradient(135deg, var(--cyan), #79f0ff); font-weight: 850; }
+    .secondary { padding: 0 15px; color: var(--muted); border: 1px solid var(--line); background: rgba(7, 16, 24, .7); }
+    .device-name { align-self: center; min-width: 0; }
+    .device-name strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .device-name span { color: var(--muted); font-size: 13px; }
+    .hero { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .metric { padding: 16px; border-radius: 17px; background: linear-gradient(145deg, rgba(93,169,255,.10), rgba(76,227,210,.05)); border: 1px solid var(--line); }
+    .metric span { display: block; color: var(--muted); font-size: 13px; }
+    .metric strong { display: block; margin-top: 6px; font-size: 27px; }
+    .section-title { display: flex; align-items: center; justify-content: space-between; margin: 0 0 14px; }
+    .section-title h2 { margin: 0; font-size: 17px; }
+    .section-title span { color: var(--muted); font-size: 12px; }
+    .controls { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; }
+    .music-controls { grid-template-columns: repeat(3, 1fr); }
+    .music-tracks { margin-top: 12px; }
+    .music-options { margin-top: 16px; }
+    button:disabled { opacity: .45; cursor: default; }
+    .control { padding: 8px; border: 1px solid var(--line); background: rgba(6, 16, 24, .68); font-weight: 700; }
+    .control.active { color: #06181a; border-color: transparent; background: var(--cyan); }
+    .images { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; min-height: 48px; }
+    .image-btn { position: relative; border: 1px solid var(--line); background: rgba(6, 16, 24, .7); font-size: 18px; font-weight: 800; }
+    .image-btn.current { color: #071018; border-color: transparent; background: linear-gradient(135deg, var(--blue), var(--cyan)); }
+    .property-grid { display: grid; gap: 16px; }
+    .property-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) 88px; align-items: center; gap: 12px; }
+    .property-row > span:first-child { color: var(--muted); font-size: 13px; }
+    .property-value { color: var(--cyan); font-weight: 800; text-align: right; }
+    input[type="range"] { margin: 0; padding: 0; accent-color: var(--cyan); }
+    .effect-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    textarea, select { width: 100%; color: var(--text); border: 1px solid var(--line); border-radius: 12px; background: #071018; }
+    textarea { min-height: 78px; padding: 12px; resize: vertical; }
+    select { padding: 11px; }
+    .notice-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+    .notice-actions { display: grid; grid-template-columns: 2fr 1fr; gap: 9px; margin-top: 10px; }
+    .progress { min-height: 18px; margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .empty { grid-column: 1/-1; padding: 20px 8px; color: var(--muted); text-align: center; }
+    details { margin-top: 14px; }
+    summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+    .settings { display: grid; gap: 9px; margin-top: 13px; }
+    label { color: var(--muted); font-size: 12px; }
+    input { width: 100%; margin-top: 5px; padding: 11px 12px; color: var(--text); border: 1px solid var(--line); border-radius: 11px; background: #071018; }
+    .log { height: 116px; overflow: auto; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: #050b10; color: #a7bdc9; font: 12px/1.6 Consolas, monospace; white-space: pre-wrap; }
+    .note { margin: 12px 2px 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    @media (max-width: 540px) {
+      .app { padding-top: 18px; }
+      header { align-items: flex-start; }
+      .connect-row { grid-template-columns: 1fr; }
+      .connect-actions button { flex: 1; }
+      .controls { grid-template-columns: repeat(2, 1fr); }
+      .images { grid-template-columns: repeat(3, 1fr); }
+      .notice-options { grid-template-columns: 1fr; }
+      .property-row { grid-template-columns: 1fr; gap: 7px; }
+      .property-value { text-align: left; }
+    }
+    :root {
+      --bg: #080d19;
+      --panel: #111a2b;
+      --line: rgba(178, 206, 234, .13);
+      --text: #f2f7ff;
+      --muted: #98a9c2;
+      --cyan: #69e7d1;
+      --blue: #8ca8ff;
+      --shadow: 0 22px 60px rgba(0, 0, 0, .22);
+    }
+    body {
+      background: radial-gradient(circle at 10% -15%, #203753 0, transparent 34%),
+        radial-gradient(circle at 100% 15%, #202653 0, transparent 33%), #080d19;
+    }
+    .app { width: min(1120px, 100%); padding: 30px 24px 64px; }
+    header { margin-bottom: 24px; }
+    .eyebrow { color: var(--cyan); letter-spacing: .2em; }
+    h1 { font-size: clamp(27px, 5vw, 39px); letter-spacing: -.035em; }
+    .subtitle { margin: 7px 0 0; color: var(--muted); font-size: 14px; }
+    .status-pill { border-color: rgba(148, 174, 207, .24); padding: 10px 16px; }
+    .nav { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; padding: 6px; border: 1px solid var(--line); border-radius: 19px; background: rgba(17, 26, 43, .75); box-shadow: var(--shadow); }
+    .nav-btn { min-height: 47px; border: 0; border-radius: 13px; color: var(--muted); background: transparent; cursor: pointer; font-weight: 700; }
+    .nav-btn:hover { color: var(--text); background: rgba(255,255,255,.06); }
+    .nav-btn.active { color: #081421; background: var(--cyan); box-shadow: 0 4px 16px rgba(105,231,209,.18); }
+    .nav-icon { margin-right: 8px; font-size: 17px; }
+    .page { display: none; animation: enter .24s ease-out; }
+    .page.active { display: block; }
+    @keyframes enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    .page-heading { margin: 27px 0 4px; }
+    .page-heading h2 { margin: 0; font-size: clamp(23px, 4vw, 30px); letter-spacing: -.03em; }
+    .page-heading p { margin: 7px 0 0; color: var(--muted); font-size: 14px; }
+    .card { background: linear-gradient(150deg, rgba(24,37,58,.95), rgba(15,25,42,.94)); border-radius: 22px; padding: 23px; }
+    .section-title h2 { font-size: 18px; }
+    .section-title span { font-size: 13px; }
+    .connection-card { margin-top: 18px; padding: 16px 20px; }
+    .connection-card .note { margin-top: 9px; }
+    .hero { gap: 14px; border: none; background: transparent; box-shadow: none; padding: 0; }
+    .metric { position: relative; min-height: 140px; padding: 24px; border: 1px solid var(--line); border-radius: 22px; background: linear-gradient(145deg, #223250, #15233a); overflow: hidden; }
+    .metric::after { content: ''; position: absolute; width: 170px; height: 170px; right: -65px; top: -75px; border-radius: 50%; background: rgba(105,231,209,.08); }
+    .metric strong { font-size: clamp(26px, 4vw, 39px); line-height: 1.25; }
+    .metric span { font-size: 14px; }
+    .overview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 14px; }
+    .overview-grid .card { margin-top: 0; min-height: 148px; }
+    .overview-label { display: block; color: var(--muted); font-size: 13px; }
+    .overview-value { display: block; margin: 13px 0 16px; font-size: 21px; font-weight: 800; }
+    .text-link { border: 0; padding: 0; background: none; color: var(--cyan); font-size: 13px; font-weight: 700; cursor: pointer; }
+    .control, .image-btn, .secondary { border-color: rgba(178,206,234,.18); background: rgba(7,16,31,.56); }
+    .control:hover, .image-btn:hover, .secondary:hover { border-color: rgba(105,231,209,.58); filter: brightness(1.12); }
+    .control.active, .image-btn.current { color: #081421; border-color: transparent; background: var(--cyan); }
+    .primary { background: linear-gradient(135deg, #6fe8d4, #a0d9ff); }
+    .property-grid { gap: 20px; }
+    .property-row { grid-template-columns: 110px minmax(0, 1fr) 110px; padding: 4px 0; }
+    .property-row > span:first-child { font-size: 14px; }
+    .property-value { font-size: 14px; }
+    .images { grid-template-columns: repeat(6, 1fr); }
+    .image-btn { min-height: 56px; }
+    input[type="range"] { background: none; border: 0; padding: 0; }
+    .settings-card details { margin-top: 0; }
+    .settings-card summary { font-size: 16px; font-weight: 700; color: var(--text); }
+    .voice-hero { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; }
+    .voice-hero h3 { margin: 0 0 8px; font-size: 20px; }
+    .voice-hero p { margin: 0; color: var(--muted); line-height: 1.6; }
+    .voice-mic { min-width: 152px; font-size: 16px; }
+    .voice-mic.listening { background: linear-gradient(135deg, #ff8694, #ffc08b); }
+    .voice-live { min-height: 68px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: rgba(5, 12, 23, .58); font-size: 18px; line-height: 1.5; }
+    .voice-status { display: block; margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .voice-form { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 10px; }
+    .voice-form input { min-height: 48px; }
+    .voice-examples { display: flex; flex-wrap: wrap; gap: 8px; }
+    .voice-chip { min-height: 37px; padding: 7px 11px; border: 1px solid var(--line); border-radius: 999px; color: var(--text); background: rgba(7,16,31,.56); cursor: pointer; }
+    .voice-chip:hover { border-color: var(--cyan); }
+    .voice-feedback { min-height: 42px; margin-top: 12px; color: var(--cyan); font-size: 14px; line-height: 1.5; }
+    .voice-switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }
+    .voice-switch input { width: auto; margin: 0; }
+    .display-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .camera-state { margin: 14px 0 0; color: var(--muted); font-size: 14px; }
+    @media (max-width: 700px) {
+      .app { padding: 20px 16px 100px; }
+      .connection-card { padding: 13px 15px; }
+      .connection-card .connect-row { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+      .connection-card .primary { min-height: 42px; padding: 0 12px; font-size: 13px; }
+      .connection-card .note { display: none; }
+      .nav { position: fixed; z-index: 20; bottom: max(10px, env(safe-area-inset-bottom)); left: 12px; right: 12px; gap: 2px; padding: 5px; border-radius: 18px; background: rgba(17,26,43,.96); backdrop-filter: blur(16px); }
+      .nav-btn { min-height: 52px; padding: 4px 1px; font-size: 11px; }
+      .nav-icon { display: block; margin: 0 0 3px; font-size: 19px; }
+      .overview-grid { grid-template-columns: 1fr; }
+      .overview-grid .card { min-height: 0; }
+      .page-heading { margin-top: 25px; }
+      .card { padding: 18px; }
+      .images { grid-template-columns: repeat(3, 1fr); }
+      .property-row { grid-template-columns: 1fr; gap: 8px; }
+      .property-value { text-align: left; }
+      .voice-hero, .voice-form { grid-template-columns: 1fr; }
+      .voice-mic { width: 100%; }
+    }
+    @media (max-width: 400px) {
+      .hero { grid-template-columns: 1fr 1fr; }
+      .metric { min-height: 125px; padding: 18px; }
+      .metric strong { font-size: 23px; }
+      .controls { grid-template-columns: repeat(2, 1fr); }
+      .music-controls { grid-template-columns: repeat(3, 1fr); }
+      .nav-btn { font-size: 10px; }
+      .nav-icon { font-size: 17px; }
+    }
+    /* Shared console layout: compact desktop workspace and touch navigation. */
+    :root { --panel: #121e30; --shadow: 0 8px 28px rgba(0,0,0,.16); }
+    .app { width: min(1280px, 100%); }
+    h1 { font-size: clamp(26px,4vw,34px); }
+    .card { border-radius: 18px; }
+    .metric { min-height: 118px; padding: 21px; }
+    .overview-grid .card { min-height: 132px; }
+    .section-title { gap: 12px; flex-wrap: wrap; }
+    .link-health { display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); }
+    .link-health::before { content:''; width:7px; height:7px; border-radius:50%; background:#718096; }
+    .link-health[data-state="live"]::before { background:var(--cyan); }
+    .link-health[data-state="stale"]::before { background:#ffc477; }
+    .link-health button { margin-left:auto; min-height:32px; border:0; border-radius:8px; padding:5px 10px; color:var(--cyan); background:rgba(105,231,209,.08); cursor:pointer; }
+    .quick-actions { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; }
+    .library-tools { display:grid; grid-template-columns: minmax(0,1fr) 135px; gap:10px; margin-bottom:14px; }
+    .library-tools input { margin:0; }
+    .command-library { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .command-item { min-height:62px; text-align:left; padding:11px 13px; border:1px solid var(--line); border-radius:12px; color:var(--text); background:rgba(7,16,31,.4); cursor:pointer; overflow-wrap:anywhere; }
+    .command-item:hover { border-color:var(--cyan); }
+    .command-item small { display:block; margin-top:6px; color:var(--muted); font-size:11px; }
+    .library-footer { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:14px; color:var(--muted); font-size:12px; }
+    .mode-context { margin-top:14px; border:1px solid rgba(255,196,119,.3); border-radius:14px; padding:14px 16px; color:#f5d6ae; background:rgba(255,196,119,.06); font-size:13px; line-height:1.7; }
+    .mode-context button { display:block; margin-top:9px; }
+    .toast { position:fixed; z-index:50; left:50%; bottom:28px; transform:translateX(-50%); max-width:calc(100% - 32px); width:max-content; padding:12px 18px; border:1px solid rgba(105,231,209,.4); border-radius:13px; color:var(--text); background:#193044; box-shadow:var(--shadow); font-size:13px; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:2px solid var(--cyan); outline-offset:3px; }
+    .music-tracks .image-btn { font-size:14px; padding:12px 8px; line-height:1.6; }
+    @media(min-width:1000px) {
+      .app { display:grid; grid-template-columns:164px minmax(0,1fr); gap:0 26px; padding:28px 28px 64px; }
+      header { grid-column:1/-1; }
+      .nav { grid-column:1; grid-row:2 / span 2; position:sticky; top:24px; display:flex; flex-direction:column; align-self:start; padding:9px; border-radius:18px; }
+      .nav-btn { text-align:left; padding:0 15px; min-height:51px; }
+      .connection-card { grid-column:2; grid-row:2; margin-top:0; }
+      .page { grid-column:2; grid-row:3; min-width:0; }
+      .page-heading { margin-top:24px; }
+      .overview-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @media(max-width:700px) {
+      .toast { bottom:calc(88px + env(safe-area-inset-bottom)); }
+      .card { padding:18px; }
+      .command-library { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .quick-actions { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .library-tools { grid-template-columns:minmax(0,1fr) 112px; }
+      .music-controls { grid-template-columns:repeat(3,minmax(0,1fr)); }
+      .status-pill { padding:9px 10px; font-size:11px; }
+      .connect-row { min-width:0; }
+      .voice-hero { grid-template-columns:1fr; }
+      .voice-mic { width:100%; }
+    }
+    @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+  </style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <div><p class="eyebrow">W02 · FPGA CONTROL</p><h1>影音控制台</h1><p class="subtitle">图片、音乐与屏幕显示，一处掌控</p></div>
+    <div id="statusPill" class="status-pill">未连接</div>
+  </header>
+
+  <nav class="nav" aria-label="主导航">
+    <button class="nav-btn active" data-page="overview" aria-current="page"><span class="nav-icon">◫</span>总览</button>
+    <button class="nav-btn" data-page="images"><span class="nav-icon">▧</span>图片</button>
+    <button class="nav-btn" data-page="music"><span class="nav-icon">♫</span>音乐</button>
+    <button class="nav-btn" data-page="camera"><span class="nav-icon">◉</span>视频 / 摄像头</button>
+    <button class="nav-btn" data-page="voice"><span class="nav-icon">🎙</span>语音</button>
+    <button class="nav-btn" data-page="notice"><span class="nav-icon">▤</span>通知</button>
+    <button class="nav-btn" data-page="settings"><span class="nav-icon">⚙</span>设置</button>
+  </nav>
+
+  <section class="card connection-card">
+    <div class="connect-row">
+      <div class="device-name"><strong id="deviceName">W02 蓝牙模块</strong><span id="deviceHint">9600 baud · FPGA UART</span></div>
+      <div class="connect-actions">
+        <button id="connectBtn" class="primary">扫描BLE</button>
+      </div>
+    </div>
+    <p class="note">点击“扫描BLE”直接选择模块，不需要先在系统中配对。网页需使用Android Chrome并通过HTTPS打开。</p>
+    <div id="linkHealth" class="link-health" data-state="idle"><span id="linkHealthText">连接设备后查看实时状态</span><button id="healthRefreshBtn" type="button" disabled>刷新设备</button></div>
+  </section>
+
+  <div class="page active" data-page="overview">
+  <div class="page-heading"><h2>设备总览</h2><p>实时查看播放状态，快速进入各项控制</p></div>
+  <section class="card hero">
+    <div class="metric"><span>当前图片</span><strong id="currentText">—</strong></div>
+    <div class="metric"><span>HDMI 当前画面</span><strong id="modeText">等待连接</strong></div>
+  </section>
+
+  <section class="card"><div class="section-title"><h2>画面来源</h2><span id="modeStatus">等待连接</span></div>
+    <div class="display-modes">
+      <button class="control" data-display-mode="0" type="button">▧ 图片与音乐</button>
+      <button class="control" data-display-mode="2" type="button">▶ 播放 TF 卡视频</button>
+      <button class="control" data-display-mode="1" type="button">◉ 摄像头实时画面</button>
+    </div>
+  </section>
+
+  <section class="card"><div class="section-title"><h2>快捷操作</h2><span>常用控制，无需切换页面</span></div>
+    <div class="quick-actions">
+      <button class="control" data-quick-command="5">◀ 上一张图片</button>
+      <button class="control" data-quick-command="4">下一张图片 ▶</button>
+      <button class="control" data-quick-command="17">♫ 上一首歌曲</button>
+      <button class="control" data-quick-command="18">下一首歌曲 ♫</button>
+    </div>
+  </section>
+  <div class="overview-grid">
+    <section class="card"><span class="overview-label">图片目录</span><strong id="overviewImages" class="overview-value">等待扫描</strong><button class="text-link" data-go="images">管理图片 →</button></section>
+    <section class="card"><span class="overview-label">当前音乐</span><strong id="overviewMusic" class="overview-value">等待状态</strong><button class="text-link" data-go="music">管理音乐 →</button></section>
+    <section class="card"><span class="overview-label">语音控制</span><strong class="overview-value">说出指令</strong><button class="text-link" data-go="voice">打开语音 →</button></section>
+    <section class="card"><span class="overview-label">屏幕通知</span><strong id="overviewNotice" class="overview-value">暂无通知</strong><button class="text-link" data-go="notice">发送通知 →</button></section>
+  </div>
+  </div>
+
+  <div class="page" data-page="images">
+  <div class="page-heading"><h2>图片控制</h2><p>切换图片、调整画面和轮播方式</p></div>
+  <div class="mode-context" data-player-hint hidden>当前正在显示摄像头，返回图片模式后可调整图片。<button class="text-link" data-display-mode="0">返回图片与音乐 →</button></div>
+
+  <section class="card">
+    <div class="section-title"><h2>播放控制</h2><span id="scanText">未读取队列</span></div>
+    <div class="controls">
+      <button id="prevBtn" class="control">◀ 上一张</button>
+      <button id="nextBtn" class="control">下一张 ▶</button>
+      <button id="manualBtn" class="control">手动模式</button>
+      <button id="autoBtn" class="control">自动模式</button>
+      <button id="queryBtn" class="control">刷新状态</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>图像状态</h2><span>FPGA实时参数</span></div>
+    <div class="property-grid">
+      <div class="property-row">
+        <span>转场效果</span>
+        <div class="effect-buttons">
+          <button class="control effect-btn" data-effect="0">直切</button>
+          <button class="control effect-btn" data-effect="1">淡入淡出</button>
+          <button class="control effect-btn" data-effect="2">滑动</button>
+        </div>
+        <span id="effectValue" class="property-value">直切</span>
+      </div>
+      <div class="property-row">
+        <span>屏幕亮度</span>
+        <input id="brightnessRange" type="range" min="0" max="9" step="1" value="9">
+        <span id="brightnessValue" class="property-value">9级</span>
+      </div>
+      <div class="property-row">
+        <span>屏幕对比度</span>
+        <input id="contrastRange" type="range" min="0" max="9" step="1" value="5">
+        <span id="contrastValue" class="property-value">5级</span>
+      </div>
+      <div class="property-row">
+        <span>当前图片尺寸</span>
+        <select id="sizeSelect"><option value="0">640 × 480</option><option value="1">512 × 384</option><option value="2">320 × 240</option></select>
+        <span id="sizeValue" class="property-value">640 × 480</span>
+      </div>
+      <div class="property-row">
+        <span>当前图片比例</span>
+        <select id="aspectSelect"><option value="0">原始比例</option><option value="1">4:3</option><option value="2">16:9</option><option value="3">1:1</option></select>
+        <span id="aspectValue" class="property-value">原始比例</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>图片队列</h2><span id="countText">0 张</span></div>
+    <div id="imageGrid" class="images"><div class="empty">连接后由FPGA返回图片队列</div></div>
+  </section>
+  </div>
+
+  <div class="page" data-page="music">
+  <div class="page-heading"><h2>音乐控制</h2><p>选择曲目，控制播放和屏幕歌词</p></div>
+  <div class="mode-context" data-player-hint hidden>当前正在显示摄像头，返回图片音乐模式后可控制播放。<button class="text-link" data-display-mode="0">返回图片与音乐 →</button></div>
+  <section class="card">
+    <div class="section-title"><h2>音乐属性</h2><span id="musicSummary">等待 FPGA 回传</span></div>
+    <div class="controls music-controls">
+      <button id="musicPrevBtn" class="control">上一首</button>
+      <button id="musicPlayBtn" class="control">暂停播放</button>
+      <button id="musicNextBtn" class="control">下一首</button>
+    </div>
+    <div id="musicTrackGrid" class="images music-tracks"><div class="empty">等待曲目目录</div></div>
+    <div class="property-grid music-options">
+      <div class="property-row"><span>歌词显示</span><button id="lyricToggleBtn" class="control">关闭歌词</button><span id="lyricValue" class="property-value">等待状态</span></div>
+      <div class="property-row"><span>播放音量</span><input id="volumeRange" aria-label="播放音量" type="range" min="0" max="10" step="1" value="10"><span id="volumeValue" class="property-value">等待状态</span></div>
+      <div class="property-row"><span>静音控制</span><button id="muteBtn" class="control">静音</button><span id="muteValue" class="property-value">等待状态</span></div>
+      <div class="property-row"><span>底部频谱</span><button id="spectrumToggleBtn" class="control">切换频谱</button><span id="spectrumValue" class="property-value">等待状态</span></div>
+      <div class="property-row"><span>歌名显示</span><button id="titleToggleBtn" class="control">关闭歌名</button><span id="titleValue" class="property-value">等待状态</span></div>
+    </div>
+  </section>
+  </div>
+
+  <div class="page" data-page="camera">
+  <div class="page-heading"><h2>视频与摄像头</h2><p>切换 TF 卡视频、摄像头与图片音乐</p></div>
+  <section class="card">
+    <div class="section-title"><h2>画面切换</h2><span id="cameraModeText">等待连接</span></div>
+    <div class="display-modes">
+      <button class="control" data-display-mode="1" type="button">◉ 显示摄像头</button>
+      <button class="control" data-display-mode="2" type="button">▶ 播放 TF 卡视频</button>
+      <button class="control" data-display-mode="0" type="button">▧ 返回图片与音乐</button>
+    </div>
+    <div class="property-row"><span>视频 / 音乐音量</span><input id="videoVolumeRange" aria-label="视频音量" type="range" min="0" max="10" step="1" value="10"><span id="videoVolumeValue" class="property-value">等待设备状态</span></div>
+    <div class="display-modes"><button id="videoVolumeDown" class="control" type="button">音量 −</button><button id="videoVolumeUp" class="control" type="button">音量 ＋</button><button id="videoMuteBtn" class="control" type="button">静音</button></div>
+    <p class="note">音量共 11 档（0～10），视频与音乐共用；切换画面会保留音量。视频需配套新版 FPGA 程序和 TF 卡 VIDEO 目录中的 01.MVI、00.wav。点击“返回图片与音乐”退出视频。</p>
+    <p id="cameraHint" class="camera-state">连接 W02 后可切换，设备回传会显示当前模式。</p>
+  </section>
+  </div>
+
+  <div class="page" data-page="voice">
+  <div class="page-heading"><h2>语音控制</h2><p>用手机麦克风说出指令，经 W02 发给 FPGA · <button class="text-link" data-go="commands">查阅 536 条指令 →</button></p></div>
+  <section class="card voice-hero">
+    <div><h3>点击后开始说话</h3><p>每次识别一条命令；识别完成后自动发送。ASRPRO 本机语音仍可独立控制 FPGA。</p></div>
+    <button id="voiceMicBtn" class="primary voice-mic" type="button">🎙 开始聆听</button>
+  </section>
+  <section class="card">
+    <div class="section-title"><h2>识别与执行</h2><span>只执行最终识别结果</span></div>
+    <div id="voiceTranscript" class="voice-live" aria-live="polite">等待语音指令…</div>
+    <span id="voiceStatus" class="voice-status" role="status">点击麦克风并允许浏览器使用麦克风</span>
+    <div id="voiceFeedback" class="voice-feedback" aria-live="polite">等待操作</div>
+    <label class="voice-switch"><input id="voiceSpeakToggle" type="checkbox">播报执行结果</label>
+  </section>
+  <section class="card">
+    <div class="section-title"><h2>文字指令</h2><span>语音识别不可用时也能操作</span></div>
+    <div class="voice-form"><label>输入一句话<input id="voiceTextInput" type="text" maxlength="48" placeholder="例如：亮度调到七级"></label><button id="voiceTextBtn" class="primary" type="button">执行指令</button></div>
+    <p class="note">设备控制需先连接 W02；趣味问答无需蓝牙。文字和语音共用同一套指令。</p>
+  </section>
+  <section class="card">
+    <div class="section-title"><h2>试着这样说</h2><span>点击短语可直接执行</span></div>
+    <div class="voice-examples">
+      <button class="voice-chip" data-voice-example="下一张">下一张</button>
+      <button class="voice-chip" data-voice-example="播放视频">播放视频</button>
+      <button class="voice-chip" data-voice-example="停止视频">停止视频</button>
+      <button class="voice-chip" data-voice-example="音量小一点">音量小一点</button>
+      <button class="voice-chip" data-voice-example="打开摄像头">打开摄像头</button>
+      <button class="voice-chip" data-voice-example="返回图片音乐">返回图片音乐</button>
+      <button class="voice-chip" data-voice-example="播放心似烟火">播放心似烟火</button>
+      <button class="voice-chip" data-voice-example="暂停音乐">暂停音乐</button>
+      <button class="voice-chip" data-voice-example="亮度调到七级">亮度调到七级</button>
+      <button class="voice-chip" data-voice-example="切换到滑动效果">切换到滑动效果</button>
+      <button class="voice-chip" data-voice-example="图片比例16比9">图片比例16比9</button>
+      <button class="voice-chip" data-voice-example="关闭歌词">关闭歌词</button>
+      <button class="voice-chip" data-voice-example="显示图片属性">显示图片属性</button>
+      <button class="voice-chip" data-voice-example="讲个笑话">讲个笑话</button>
+      <button class="voice-chip" data-voice-example="返回相册">返回相册</button>
+      <button class="voice-chip" data-voice-example="猜个谜语">猜个谜语</button>
+      <button class="voice-chip" data-voice-example="背一首春晓">背一首春晓</button>
+      <button class="voice-chip" data-voice-example="推荐一首歌">推荐一首歌</button>
+    </div>
+    <p class="note">支持视频／摄像头／图片音乐切换、音量与静音、图片编号、自动／手动、亮度、对比度、转场、尺寸、比例、点歌、播放／暂停、歌词、歌名及状态刷新。ASRPRO 永久唤醒后可直接说“播放视频”；需下载最新语音模型。</p>
+  </section>
+  </div>
+
+  <div class="page" data-page="commands">
+  <div class="page-heading"><h2>语音指令库</h2><p>536 条指令，按场景查找。点击短句填入语音页，再确认执行。 <button class="text-link" data-go="voice">返回语音控制 →</button></p></div>
+  <section class="card">
+    <div class="library-tools">
+      <input id="commandSearch" type="search" aria-label="搜索语音指令" placeholder="搜索歌名、摄像头、亮度、谜语…">
+      <select id="commandCategory" aria-label="指令分类"><option value="all">全部场景</option><option value="images">图片切换</option><option value="music">音乐播放</option><option value="camera">摄像头</option><option value="properties">图像属性</option><option value="local">问答与趣味</option><option value="status">设备状态</option></select>
+    </div>
+    <div id="commandLibrary" class="command-library"></div>
+    <div class="library-footer"><span id="commandCount" aria-live="polite"></span><button id="commandMore" class="secondary" type="button">显示更多</button></div>
+  </section>
+  </div>
+
+  <div class="page" data-page="notice">
+  <div class="page-heading"><h2>屏幕通知</h2><p>把文字发送到 HDMI 画面上方</p></div>
+  <section class="card">
+    <div class="section-title"><h2>屏幕通知</h2><span>在画面上方滚动显示</span></div>
+    <textarea id="noticeInput" maxlength="48" placeholder="输入通知内容，支持中文、英文和数字"></textarea>
+    <div class="notice-options">
+      <label>通知类型<select id="noticeType"><option value="0">普通通知</option><option value="1">紧急通知（红色）</option></select></label>
+      <label>滚动速度<select id="noticeSpeed"><option value="0">慢速</option><option value="1" selected>正常</option><option value="2">快速</option></select></label>
+      <label>显示时长<select id="noticeDuration"><option value="0">一直显示</option><option value="1" selected>10秒后取消</option><option value="2">30秒后取消</option><option value="3">60秒后取消</option></select></label>
+    </div>
+    <div class="notice-actions">
+      <button id="sendNoticeBtn" class="primary">发送并显示</button>
+      <button id="clearNoticeBtn" class="secondary">立即取消显示</button>
+    </div>
+    <div id="noticeProgress" class="progress">通知由手机渲染为点阵后发送，FPGA无需中文字库</div>
+  </section>
+  </div>
+
+  <div class="page" data-page="settings">
+  <div class="page-heading"><h2>连接设置</h2><p>蓝牙参数、设备绑定和通讯记录</p></div>
+  <p class="note">点击顶部“扫描BLE”选择 W02 模块。手机请使用 Android Chrome，通过 HTTPS 打开本页面。</p>
+  <section class="card settings-card">
+    <details open>
+      <summary>连接设置与调试</summary>
+      <div class="settings">
+        <label>W02服务UUID<input id="serviceUuid" value="0000ffe0-0000-1000-8000-00805f9b34fb"></label>
+        <label>写入特征UUID（手机→模块）<input id="writeUuid" value="0000ffe1-0000-1000-8000-00805f9b34fb"></label>
+        <label>通知特征UUID（模块→手机）<input id="notifyUuid" value="0000ffe1-0000-1000-8000-00805f9b34fb"></label>
+        <button id="forgetBtn" class="secondary">解除当前蓝牙绑定</button>
+        <button id="demoBtn" class="secondary">开启演示模式</button>
+        <div id="log" class="log">等待操作…</div>
+      </div>
+    </details>
+  </section>
+  </div>
+</main>
+<div id="actionToast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const els = Object.fromEntries([
+    'statusPill','connectBtn','deviceName','deviceHint','currentText','modeText','modeStatus',
+    'cameraModeText','cameraHint','scanText','videoVolumeRange','videoVolumeValue','videoVolumeDown','videoVolumeUp','videoMuteBtn',
+    'countText','imageGrid','prevBtn','nextBtn','manualBtn','autoBtn','queryBtn','serviceUuid',
+    'writeUuid','notifyUuid','demoBtn','log','brightnessRange','brightnessValue',
+    'contrastRange','contrastValue','effectValue','sizeSelect','sizeValue','aspectSelect','aspectValue',
+    'noticeInput','noticeType','noticeSpeed','noticeDuration',
+    'sendNoticeBtn','clearNoticeBtn','noticeProgress','forgetBtn',
+    'musicSummary','musicPrevBtn','musicPlayBtn','musicNextBtn','musicTrackGrid',
+    'lyricToggleBtn','titleToggleBtn','lyricValue','titleValue','spectrumToggleBtn','spectrumValue','volumeRange','volumeValue','muteBtn','muteValue',
+    'overviewImages','overviewMusic','overviewNotice',
+    'voiceMicBtn','voiceTranscript','voiceStatus','voiceFeedback','voiceSpeakToggle',
+    'voiceTextInput','voiceTextBtn'
+  ].map(id => [id, $(id)]));
+
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const songNames = ["童话镇", "爱的回归线", "红色高跟鞋", "喜欢你", "静悄悄", "那时雨", "心似烟火", "恶作剧"];
+  const voiceCommandCatalog = new Map([
+  [
+    "查询设备状态",
+    {
+      "command": 1,
+      "argument": 0,
+      "label": "查询设备状态"
+    }
+  ],
+  [
+    "检查设备连接",
+    {
+      "command": 1,
+      "argument": 0,
+      "label": "检查设备连接"
+    }
+  ],
+  [
+    "设备在线吗",
+    {
+      "command": 1,
+      "argument": 0,
+      "label": "设备在线吗"
+    }
+  ],
+  [
+    "刷新设备状态",
+    {
+      "command": 1,
+      "argument": 0,
+      "label": "刷新设备状态"
+    }
+  ],
+  [
+    "小美看看设备状态",
+    {
+      "command": 1,
+      "argument": 0,
+      "label": "小美看看设备状态"
+    }
+  ],
+  [
+    "你会做什么",
+    {
+      "reply": "可以说下一张、上一首、播放歌名，也可以调节亮度、比例和歌词。"
+    }
+  ],
+  [
+    "语音控制帮助",
+    {
+      "reply": "可以说下一张、上一首、播放歌名，也可以调节亮度、比例和歌词。"
+    }
+  ],
+  [
+    "图片有什么指令",
+    {
+      "reply": "可以说下一张、上一张、自动轮播、显示第几张、切换转场和调整图片比例。"
+    }
+  ],
+  [
+    "怎么控制图片",
+    {
+      "reply": "可以说下一张、上一张、自动轮播、显示第几张、切换转场和调整图片比例。"
+    }
+  ],
+  [
+    "音乐有什么指令",
+    {
+      "reply": "可以说播放歌名、上一首、下一首、暂停音乐、打开歌词或关闭歌名。"
+    }
+  ],
+  [
+    "怎么控制音乐",
+    {
+      "reply": "可以说播放歌名、上一首、下一首、暂停音乐、打开歌词或关闭歌名。"
+    }
+  ],
+  [
+    "你叫什么名字",
+    {
+      "reply": "我叫小美，是这台影音播放器的语音助手。"
+    }
+  ],
+  [
+    "介绍一下自己",
+    {
+      "reply": "我叫小美，是这台影音播放器的语音助手。"
+    }
+  ],
+  [
+    "讲个笑话",
+    {
+      "reply": "为什么音符不迷路？因为它总能找到节拍。"
+    }
+  ],
+  [
+    "来个冷笑话",
+    {
+      "reply": "为什么音符不迷路？因为它总能找到节拍。"
+    }
+  ],
+  [
+    "夸夸我",
+    {
+      "reply": "你已经把图片、音乐和语音连在一起了，继续加油！"
+    }
+  ],
+  [
+    "鼓励我一下",
+    {
+      "reply": "你已经把图片、音乐和语音连在一起了，继续加油！"
+    }
+  ],
+  [
+    "来句诗",
+    {
+      "reply": "明月松间照，清泉石上流。"
+    }
+  ],
+  [
+    "念一句诗",
+    {
+      "reply": "明月松间照，清泉石上流。"
+    }
+  ],
+  [
+    "今天开心吗",
+    {
+      "reply": "能和你一起听歌看图，我很开心。"
+    }
+  ],
+  [
+    "小美开心吗",
+    {
+      "reply": "能和你一起听歌看图，我很开心。"
+    }
+  ],
+  [
+    "晚安小美",
+    {
+      "reply": "晚安，愿你有个好梦。"
+    }
+  ],
+  [
+    "小美晚安",
+    {
+      "reply": "晚安，愿你有个好梦。"
+    }
+  ],
+  [
+    "你喜欢哪首歌",
+    {
+      "reply": "可以试试心似烟火，也可以直接说播放心似烟火。"
+    }
+  ],
+  [
+    "推荐一首歌",
+    {
+      "reply": "可以试试心似烟火，也可以直接说播放心似烟火。"
+    }
+  ],
+  [
+    "音量大一点",
+    {
+      "command": 33,
+      "argument": 0,
+      "label": "音量大一点"
+    }
+  ],
+  [
+    "调大音量",
+    {
+      "command": 33,
+      "argument": 0,
+      "label": "调大音量"
+    }
+  ],
+  [
+    "提高音量",
+    {
+      "command": 33,
+      "argument": 0,
+      "label": "提高音量"
+    }
+  ],
+  [
+    "声音大一点",
+    {
+      "command": 33,
+      "argument": 0,
+      "label": "声音大一点"
+    }
+  ],
+  [
+    "大声一点",
+    {
+      "command": 33,
+      "argument": 0,
+      "label": "大声一点"
+    }
+  ],
+  [
+    "音量小一点",
+    {
+      "command": 34,
+      "argument": 0,
+      "label": "音量小一点"
+    }
+  ],
+  [
+    "调小音量",
+    {
+      "command": 34,
+      "argument": 0,
+      "label": "调小音量"
+    }
+  ],
+  [
+    "降低音量",
+    {
+      "command": 34,
+      "argument": 0,
+      "label": "降低音量"
+    }
+  ],
+  [
+    "声音小一点",
+    {
+      "command": 34,
+      "argument": 0,
+      "label": "声音小一点"
+    }
+  ],
+  [
+    "小声一点",
+    {
+      "command": 34,
+      "argument": 0,
+      "label": "小声一点"
+    }
+  ],
+  [
+    "静音",
+    {
+      "command": 35,
+      "argument": 1,
+      "label": "静音"
+    }
+  ],
+  [
+    "关闭声音",
+    {
+      "command": 35,
+      "argument": 1,
+      "label": "关闭声音"
+    }
+  ],
+  [
+    "开启静音",
+    {
+      "command": 35,
+      "argument": 1,
+      "label": "开启静音"
+    }
+  ],
+  [
+    "不要声音",
+    {
+      "command": 35,
+      "argument": 1,
+      "label": "不要声音"
+    }
+  ],
+  [
+    "取消静音",
+    {
+      "command": 35,
+      "argument": 0,
+      "label": "取消静音"
+    }
+  ],
+  [
+    "恢复声音",
+    {
+      "command": 35,
+      "argument": 0,
+      "label": "恢复声音"
+    }
+  ],
+  [
+    "打开声音",
+    {
+      "command": 35,
+      "argument": 0,
+      "label": "打开声音"
+    }
+  ],
+  [
+    "解除静音",
+    {
+      "command": 35,
+      "argument": 0,
+      "label": "解除静音"
+    }
+  ],
+  [
+    "切换静音",
+    {
+      "command": 36,
+      "argument": 0,
+      "label": "切换静音"
+    }
+  ],
+  [
+    "最大音量",
+    {
+      "command": 32,
+      "argument": 10,
+      "label": "最大音量"
+    }
+  ],
+  [
+    "音量最大",
+    {
+      "command": 32,
+      "argument": 10,
+      "label": "音量最大"
+    }
+  ],
+  [
+    "音量开满",
+    {
+      "command": 32,
+      "argument": 10,
+      "label": "音量开满"
+    }
+  ],
+  [
+    "一半音量",
+    {
+      "command": 32,
+      "argument": 5,
+      "label": "一半音量"
+    }
+  ],
+  [
+    "音量一半",
+    {
+      "command": 32,
+      "argument": 5,
+      "label": "音量一半"
+    }
+  ],
+  [
+    "音量设为零级",
+    {
+      "command": 32,
+      "argument": 0,
+      "label": "音量设为零级"
+    }
+  ],
+  [
+    "音量零级",
+    {
+      "command": 32,
+      "argument": 0,
+      "label": "音量零级"
+    }
+  ],
+  [
+    "音量设为一级",
+    {
+      "command": 32,
+      "argument": 1,
+      "label": "音量设为一级"
+    }
+  ],
+  [
+    "音量一级",
+    {
+      "command": 32,
+      "argument": 1,
+      "label": "音量一级"
+    }
+  ],
+  [
+    "音量设为二级",
+    {
+      "command": 32,
+      "argument": 2,
+      "label": "音量设为二级"
+    }
+  ],
+  [
+    "音量二级",
+    {
+      "command": 32,
+      "argument": 2,
+      "label": "音量二级"
+    }
+  ],
+  [
+    "音量设为三级",
+    {
+      "command": 32,
+      "argument": 3,
+      "label": "音量设为三级"
+    }
+  ],
+  [
+    "音量三级",
+    {
+      "command": 32,
+      "argument": 3,
+      "label": "音量三级"
+    }
+  ],
+  [
+    "音量设为四级",
+    {
+      "command": 32,
+      "argument": 4,
+      "label": "音量设为四级"
+    }
+  ],
+  [
+    "音量四级",
+    {
+      "command": 32,
+      "argument": 4,
+      "label": "音量四级"
+    }
+  ],
+  [
+    "音量设为五级",
+    {
+      "command": 32,
+      "argument": 5,
+      "label": "音量设为五级"
+    }
+  ],
+  [
+    "音量五级",
+    {
+      "command": 32,
+      "argument": 5,
+      "label": "音量五级"
+    }
+  ],
+  [
+    "音量设为六级",
+    {
+      "command": 32,
+      "argument": 6,
+      "label": "音量设为六级"
+    }
+  ],
+  [
+    "音量六级",
+    {
+      "command": 32,
+      "argument": 6,
+      "label": "音量六级"
+    }
+  ],
+  [
+    "音量设为七级",
+    {
+      "command": 32,
+      "argument": 7,
+      "label": "音量设为七级"
+    }
+  ],
+  [
+    "音量七级",
+    {
+      "command": 32,
+      "argument": 7,
+      "label": "音量七级"
+    }
+  ],
+  [
+    "音量设为八级",
+    {
+      "command": 32,
+      "argument": 8,
+      "label": "音量设为八级"
+    }
+  ],
+  [
+    "音量八级",
+    {
+      "command": 32,
+      "argument": 8,
+      "label": "音量八级"
+    }
+  ],
+  [
+    "音量设为九级",
+    {
+      "command": 32,
+      "argument": 9,
+      "label": "音量设为九级"
+    }
+  ],
+  [
+    "音量九级",
+    {
+      "command": 32,
+      "argument": 9,
+      "label": "音量九级"
+    }
+  ],
+  [
+    "音量设为十级",
+    {
+      "command": 32,
+      "argument": 10,
+      "label": "音量设为十级"
+    }
+  ],
+  [
+    "音量十级",
+    {
+      "command": 32,
+      "argument": 10,
+      "label": "音量十级"
+    }
+  ],
+  [
+    "怎么控制音量",
+    {
+      "reply": "可以说音量大一点、音量小一点、音量五级、静音或取消静音。"
+    }
+  ],
+  [
+    "音量有什么指令",
+    {
+      "reply": "可以说音量大一点、音量小一点、音量五级、静音或取消静音。"
+    }
+  ],
+  [
+    "打开频谱",
+    {
+      "command": 30,
+      "argument": 1,
+      "label": "打开频谱"
+    }
+  ],
+  [
+    "开启频谱",
+    {
+      "command": 30,
+      "argument": 1,
+      "label": "开启频谱"
+    }
+  ],
+  [
+    "显示频谱",
+    {
+      "command": 30,
+      "argument": 1,
+      "label": "显示频谱"
+    }
+  ],
+  [
+    "打开音乐频谱",
+    {
+      "command": 30,
+      "argument": 1,
+      "label": "打开音乐频谱"
+    }
+  ],
+  [
+    "显示底部频谱",
+    {
+      "command": 30,
+      "argument": 1,
+      "label": "显示底部频谱"
+    }
+  ],
+  [
+    "打开频率谱线",
+    {
+      "command": 30,
+      "argument": 1,
+      "label": "打开频率谱线"
+    }
+  ],
+  [
+    "显示频率谱线",
+    {
+      "command": 30,
+      "argument": 1,
+      "label": "显示频率谱线"
+    }
+  ],
+  [
+    "打开频谱柱",
+    {
+      "command": 30,
+      "argument": 1,
+      "label": "打开频谱柱"
+    }
+  ],
+  [
+    "关闭频谱",
+    {
+      "command": 30,
+      "argument": 0,
+      "label": "关闭频谱"
+    }
+  ],
+  [
+    "隐藏频谱",
+    {
+      "command": 30,
+      "argument": 0,
+      "label": "隐藏频谱"
+    }
+  ],
+  [
+    "关闭音乐频谱",
+    {
+      "command": 30,
+      "argument": 0,
+      "label": "关闭音乐频谱"
+    }
+  ],
+  [
+    "隐藏底部频谱",
+    {
+      "command": 30,
+      "argument": 0,
+      "label": "隐藏底部频谱"
+    }
+  ],
+  [
+    "关闭频率谱线",
+    {
+      "command": 30,
+      "argument": 0,
+      "label": "关闭频率谱线"
+    }
+  ],
+  [
+    "隐藏频率谱线",
+    {
+      "command": 30,
+      "argument": 0,
+      "label": "隐藏频率谱线"
+    }
+  ],
+  [
+    "关闭频谱柱",
+    {
+      "command": 30,
+      "argument": 0,
+      "label": "关闭频谱柱"
+    }
+  ],
+  [
+    "收起频谱",
+    {
+      "command": 30,
+      "argument": 0,
+      "label": "收起频谱"
+    }
+  ],
+  [
+    "切换频谱",
+    {
+      "command": 31,
+      "argument": 0,
+      "label": "切换频谱"
+    }
+  ],
+  [
+    "切换频谱显示",
+    {
+      "command": 31,
+      "argument": 0,
+      "label": "切换频谱显示"
+    }
+  ],
+  [
+    "切换频率谱线",
+    {
+      "command": 31,
+      "argument": 0,
+      "label": "切换频率谱线"
+    }
+  ],
+  [
+    "切换底部频谱",
+    {
+      "command": 31,
+      "argument": 0,
+      "label": "切换底部频谱"
+    }
+  ],
+  [
+    "频谱有什么指令",
+    {
+      "reply": "可以说打开频谱、关闭频谱或者切换频谱，控制音乐画面底部的频率谱线。"
+    }
+  ],
+  [
+    "怎么控制频谱",
+    {
+      "reply": "可以说打开频谱、关闭频谱或者切换频谱，控制音乐画面底部的频率谱线。"
+    }
+  ],
+  [
+    "打开摄像头",
+    {
+      "command": 29,
+      "argument": 1,
+      "label": "打开摄像头"
+    }
+  ],
+  [
+    "开启摄像头",
+    {
+      "command": 29,
+      "argument": 1,
+      "label": "开启摄像头"
+    }
+  ],
+  [
+    "切换到摄像头",
+    {
+      "command": 29,
+      "argument": 1,
+      "label": "切换到摄像头"
+    }
+  ],
+  [
+    "查看实时画面",
+    {
+      "command": 29,
+      "argument": 1,
+      "label": "查看实时画面"
+    }
+  ],
+  [
+    "摄像头模式",
+    {
+      "command": 29,
+      "argument": 1,
+      "label": "摄像头模式"
+    }
+  ],
+  [
+    "实时预览",
+    {
+      "command": 29,
+      "argument": 1,
+      "label": "实时预览"
+    }
+  ],
+  [
+    "关闭摄像头",
+    {
+      "command": 29,
+      "argument": 0,
+      "label": "关闭摄像头"
+    }
+  ],
+  [
+    "退出摄像头",
+    {
+      "command": 29,
+      "argument": 0,
+      "label": "退出摄像头"
+    }
+  ],
+  [
+    "返回图片音乐",
+    {
+      "command": 29,
+      "argument": 0,
+      "label": "返回图片音乐"
+    }
+  ],
+  [
+    "回到图片音乐",
+    {
+      "command": 29,
+      "argument": 0,
+      "label": "回到图片音乐"
+    }
+  ],
+  [
+    "返回相册",
+    {
+      "command": 29,
+      "argument": 0,
+      "label": "返回相册"
+    }
+  ],
+  [
+    "相册模式",
+    {
+      "command": 29,
+      "argument": 0,
+      "label": "相册模式"
+    }
+  ],
+  [
+    "播放视频",
+    {
+      "command": 29,
+      "argument": 2,
+      "label": "播放视频"
+    }
+  ],
+  [
+    "打开视频",
+    {
+      "command": 29,
+      "argument": 2,
+      "label": "打开视频"
+    }
+  ],
+  [
+    "视频模式",
+    {
+      "command": 29,
+      "argument": 2,
+      "label": "视频模式"
+    }
+  ],
+  [
+    "播放戒不掉",
+    {
+      "command": 29,
+      "argument": 2,
+      "label": "播放戒不掉"
+    }
+  ],
+  [
+    "播放TF卡视频",
+    {
+      "command": 29,
+      "argument": 2,
+      "label": "播放TF卡视频"
+    }
+  ],
+  [
+    "停止视频",
+    {
+      "command": 29,
+      "argument": 0,
+      "label": "停止视频"
+    }
+  ],
+  [
+    "关闭视频",
+    {
+      "command": 29,
+      "argument": 0,
+      "label": "关闭视频"
+    }
+  ],
+  [
+    "退出视频",
+    {
+      "command": 29,
+      "argument": 0,
+      "label": "退出视频"
+    }
+  ],
+  [
+    "换下一幅",
+    {
+      "command": 4,
+      "argument": 0,
+      "label": "换下一幅"
+    }
+  ],
+  [
+    "翻到后面一张",
+    {
+      "command": 4,
+      "argument": 0,
+      "label": "翻到后面一张"
+    }
+  ],
+  [
+    "再看一张",
+    {
+      "command": 4,
+      "argument": 0,
+      "label": "再看一张"
+    }
+  ],
+  [
+    "换上一幅",
+    {
+      "command": 5,
+      "argument": 0,
+      "label": "换上一幅"
+    }
+  ],
+  [
+    "翻到前面一张",
+    {
+      "command": 5,
+      "argument": 0,
+      "label": "翻到前面一张"
+    }
+  ],
+  [
+    "回看上一张",
+    {
+      "command": 5,
+      "argument": 0,
+      "label": "回看上一张"
+    }
+  ],
+  [
+    "先停一下音乐",
+    {
+      "command": 14,
+      "argument": 0,
+      "label": "先停一下音乐"
+    }
+  ],
+  [
+    "我想安静一下",
+    {
+      "command": 14,
+      "argument": 0,
+      "label": "我想安静一下"
+    }
+  ],
+  [
+    "接着放音乐",
+    {
+      "command": 14,
+      "argument": 1,
+      "label": "接着放音乐"
+    }
+  ],
+  [
+    "我想继续听歌",
+    {
+      "command": 14,
+      "argument": 1,
+      "label": "我想继续听歌"
+    }
+  ],
+  [
+    "开始欣赏图片",
+    {
+      "command": 3,
+      "argument": 0,
+      "label": "开始欣赏图片"
+    }
+  ],
+  [
+    "先停在这张",
+    {
+      "command": 6,
+      "argument": 0,
+      "label": "先停在这张"
+    }
+  ],
+  [
+    "摄像头怎么用",
+    {
+      "reply": "说打开摄像头看实时画面，说返回相册回到图片音乐。"
+    }
+  ],
+  [
+    "多久会退出",
+    {
+      "reply": "现在是永久唤醒模式，上电后一直聆听，不会自动退出。"
+    }
+  ],
+  [
+    "再讲个笑话",
+    {
+      "reply": "程序员为什么喜欢黑夜？因为白天的虫子太多了。"
+    }
+  ],
+  [
+    "讲个谐音梗",
+    {
+      "reply": "小鸭子走进书店，说，我想买一本鸭力管理。"
+    }
+  ],
+  [
+    "说个绕口令",
+    {
+      "reply": "四是四，十是十，十四是十四，四十是四十。"
+    }
+  ],
+  [
+    "再来个绕口令",
+    {
+      "reply": "吃葡萄不吐葡萄皮，不吃葡萄倒吐葡萄皮。"
+    }
+  ],
+  [
+    "背一首静夜思",
+    {
+      "reply": "床前明月光，疑是地上霜。举头望明月，低头思故乡。"
+    }
+  ],
+  [
+    "背一首春晓",
+    {
+      "reply": "春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。"
+    }
+  ],
+  [
+    "来句励志的话",
+    {
+      "reply": "不怕慢，就怕停。把眼前的一小步做好，就是进步。"
+    }
+  ],
+  [
+    "学习累了",
+    {
+      "reply": "歇一歇眼睛，伸个懒腰，喝口水再继续。"
+    }
+  ],
+  [
+    "早上好小美",
+    {
+      "reply": "早上好，愿你今天有好心情。"
+    }
+  ],
+  [
+    "下午好小美",
+    {
+      "reply": "下午好，放松一下，听首喜欢的歌吧。"
+    }
+  ],
+  [
+    "谢谢小美",
+    {
+      "reply": "不客气，需要时叫我就好。"
+    }
+  ],
+  [
+    "猜个谜语",
+    {
+      "reply": "千条线，万条线，落在水里看不见。谜底是雨。"
+    }
+  ],
+  [
+    "再猜个谜语",
+    {
+      "reply": "有面没有口，有脚没有手，虽然有四脚，自己不会走。谜底是桌子。"
+    }
+  ],
+  [
+    "下一张",
+    {
+      "command": 4,
+      "argument": 0,
+      "label": "下一张"
+    }
+  ],
+  [
+    "下一张图片",
+    {
+      "command": 4,
+      "argument": 0,
+      "label": "下一张图片"
+    }
+  ],
+  [
+    "换一张图片",
+    {
+      "command": 4,
+      "argument": 0,
+      "label": "换一张图片"
+    }
+  ],
+  [
+    "切到下一张",
+    {
+      "command": 4,
+      "argument": 0,
+      "label": "切到下一张"
+    }
+  ],
+  [
+    "换个风景",
+    {
+      "command": 4,
+      "argument": 0,
+      "label": "换个风景"
+    }
+  ],
+  [
+    "图片往后翻",
+    {
+      "command": 4,
+      "argument": 0,
+      "label": "图片往后翻"
+    }
+  ],
+  [
+    "上一张",
+    {
+      "command": 5,
+      "argument": 0,
+      "label": "上一张"
+    }
+  ],
+  [
+    "上一张图片",
+    {
+      "command": 5,
+      "argument": 0,
+      "label": "上一张图片"
+    }
+  ],
+  [
+    "返回上一张",
+    {
+      "command": 5,
+      "argument": 0,
+      "label": "返回上一张"
+    }
+  ],
+  [
+    "切到上一张",
+    {
+      "command": 5,
+      "argument": 0,
+      "label": "切到上一张"
+    }
+  ],
+  [
+    "图片往前翻",
+    {
+      "command": 5,
+      "argument": 0,
+      "label": "图片往前翻"
+    }
+  ],
+  [
+    "自动轮播",
+    {
+      "command": 3,
+      "argument": 0,
+      "label": "自动轮播"
+    }
+  ],
+  [
+    "自动播放图片",
+    {
+      "command": 3,
+      "argument": 0,
+      "label": "自动播放图片"
+    }
+  ],
+  [
+    "开始轮播",
+    {
+      "command": 3,
+      "argument": 0,
+      "label": "开始轮播"
+    }
+  ],
+  [
+    "继续轮播",
+    {
+      "command": 3,
+      "argument": 0,
+      "label": "继续轮播"
+    }
+  ],
+  [
+    "让图片自己播放",
+    {
+      "command": 3,
+      "argument": 0,
+      "label": "让图片自己播放"
+    }
+  ],
+  [
+    "手动播放图片",
+    {
+      "command": 6,
+      "argument": 0,
+      "label": "手动播放图片"
+    }
+  ],
+  [
+    "停止轮播",
+    {
+      "command": 6,
+      "argument": 0,
+      "label": "停止轮播"
+    }
+  ],
+  [
+    "手动切换图片",
+    {
+      "command": 6,
+      "argument": 0,
+      "label": "手动切换图片"
+    }
+  ],
+  [
+    "我自己切图片",
+    {
+      "command": 6,
+      "argument": 0,
+      "label": "我自己切图片"
+    }
+  ],
+  [
+    "切换转场",
+    {
+      "command": 19,
+      "argument": 0,
+      "label": "切换转场"
+    }
+  ],
+  [
+    "换一种转场效果",
+    {
+      "command": 19,
+      "argument": 0,
+      "label": "换一种转场效果"
+    }
+  ],
+  [
+    "换个过渡效果",
+    {
+      "command": 19,
+      "argument": 0,
+      "label": "换个过渡效果"
+    }
+  ],
+  [
+    "直接切换",
+    {
+      "command": 7,
+      "argument": 0,
+      "label": "直接切换"
+    }
+  ],
+  [
+    "关闭转场动画",
+    {
+      "command": 7,
+      "argument": 0,
+      "label": "关闭转场动画"
+    }
+  ],
+  [
+    "淡入淡出",
+    {
+      "command": 7,
+      "argument": 1,
+      "label": "淡入淡出"
+    }
+  ],
+  [
+    "使用淡入淡出",
+    {
+      "command": 7,
+      "argument": 1,
+      "label": "使用淡入淡出"
+    }
+  ],
+  [
+    "滑动切换",
+    {
+      "command": 7,
+      "argument": 2,
+      "label": "滑动切换"
+    }
+  ],
+  [
+    "使用滑动转场",
+    {
+      "command": 7,
+      "argument": 2,
+      "label": "使用滑动转场"
+    }
+  ],
+  [
+    "调亮一点",
+    {
+      "command": 20,
+      "argument": 0,
+      "label": "调亮一点"
+    }
+  ],
+  [
+    "提高亮度",
+    {
+      "command": 20,
+      "argument": 0,
+      "label": "提高亮度"
+    }
+  ],
+  [
+    "图片亮一点",
+    {
+      "command": 20,
+      "argument": 0,
+      "label": "图片亮一点"
+    }
+  ],
+  [
+    "再亮一点",
+    {
+      "command": 20,
+      "argument": 0,
+      "label": "再亮一点"
+    }
+  ],
+  [
+    "调暗一点",
+    {
+      "command": 21,
+      "argument": 0,
+      "label": "调暗一点"
+    }
+  ],
+  [
+    "降低亮度",
+    {
+      "command": 21,
+      "argument": 0,
+      "label": "降低亮度"
+    }
+  ],
+  [
+    "图片暗一点",
+    {
+      "command": 21,
+      "argument": 0,
+      "label": "图片暗一点"
+    }
+  ],
+  [
+    "再暗一点",
+    {
+      "command": 21,
+      "argument": 0,
+      "label": "再暗一点"
+    }
+  ],
+  [
+    "亮度最高",
+    {
+      "command": 8,
+      "argument": 9,
+      "label": "亮度最高",
+      "kind": "level"
+    }
+  ],
+  [
+    "调到最亮",
+    {
+      "command": 8,
+      "argument": 9,
+      "label": "调到最亮",
+      "kind": "level"
+    }
+  ],
+  [
+    "让画面亮起来",
+    {
+      "command": 8,
+      "argument": 9,
+      "label": "让画面亮起来",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度最低",
+    {
+      "command": 8,
+      "argument": 0,
+      "label": "亮度最低",
+      "kind": "level"
+    }
+  ],
+  [
+    "调到最暗",
+    {
+      "command": 8,
+      "argument": 0,
+      "label": "调到最暗",
+      "kind": "level"
+    }
+  ],
+  [
+    "增加对比度",
+    {
+      "command": 22,
+      "argument": 0,
+      "label": "增加对比度"
+    }
+  ],
+  [
+    "对比度高一点",
+    {
+      "command": 22,
+      "argument": 0,
+      "label": "对比度高一点"
+    }
+  ],
+  [
+    "减少对比度",
+    {
+      "command": 23,
+      "argument": 0,
+      "label": "减少对比度"
+    }
+  ],
+  [
+    "对比度低一点",
+    {
+      "command": 23,
+      "argument": 0,
+      "label": "对比度低一点"
+    }
+  ],
+  [
+    "对比度最高",
+    {
+      "command": 9,
+      "argument": 9,
+      "label": "对比度最高",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度最低",
+    {
+      "command": 9,
+      "argument": 0,
+      "label": "对比度最低",
+      "kind": "level"
+    }
+  ],
+  [
+    "切换图片大小",
+    {
+      "command": 24,
+      "argument": 0,
+      "label": "切换图片大小"
+    }
+  ],
+  [
+    "换一个图片尺寸",
+    {
+      "command": 24,
+      "argument": 0,
+      "label": "换一个图片尺寸"
+    }
+  ],
+  [
+    "换个图片尺寸",
+    {
+      "command": 24,
+      "argument": 0,
+      "label": "换个图片尺寸"
+    }
+  ],
+  [
+    "显示大图",
+    {
+      "command": 11,
+      "argument": 0,
+      "label": "显示大图"
+    }
+  ],
+  [
+    "图片放大",
+    {
+      "command": 11,
+      "argument": 0,
+      "label": "图片放大"
+    }
+  ],
+  [
+    "使用大图",
+    {
+      "command": 11,
+      "argument": 0,
+      "label": "使用大图"
+    }
+  ],
+  [
+    "显示中图",
+    {
+      "command": 11,
+      "argument": 1,
+      "label": "显示中图"
+    }
+  ],
+  [
+    "使用中图",
+    {
+      "command": 11,
+      "argument": 1,
+      "label": "使用中图"
+    }
+  ],
+  [
+    "显示小图",
+    {
+      "command": 11,
+      "argument": 2,
+      "label": "显示小图"
+    }
+  ],
+  [
+    "图片缩小",
+    {
+      "command": 11,
+      "argument": 2,
+      "label": "图片缩小"
+    }
+  ],
+  [
+    "使用小图",
+    {
+      "command": 11,
+      "argument": 2,
+      "label": "使用小图"
+    }
+  ],
+  [
+    "切换图片比例",
+    {
+      "command": 25,
+      "argument": 0,
+      "label": "切换图片比例"
+    }
+  ],
+  [
+    "换一个画面比例",
+    {
+      "command": 25,
+      "argument": 0,
+      "label": "换一个画面比例"
+    }
+  ],
+  [
+    "换个画面比例",
+    {
+      "command": 25,
+      "argument": 0,
+      "label": "换个画面比例"
+    }
+  ],
+  [
+    "原始比例",
+    {
+      "command": 12,
+      "argument": 0,
+      "label": "原始比例"
+    }
+  ],
+  [
+    "恢复原始比例",
+    {
+      "command": 12,
+      "argument": 0,
+      "label": "恢复原始比例"
+    }
+  ],
+  [
+    "四比三比例",
+    {
+      "command": 12,
+      "argument": 1,
+      "label": "四比三比例"
+    }
+  ],
+  [
+    "设置四比三",
+    {
+      "command": 12,
+      "argument": 1,
+      "label": "设置四比三"
+    }
+  ],
+  [
+    "十六比九比例",
+    {
+      "command": 12,
+      "argument": 2,
+      "label": "十六比九比例"
+    }
+  ],
+  [
+    "设置十六比九",
+    {
+      "command": 12,
+      "argument": 2,
+      "label": "设置十六比九"
+    }
+  ],
+  [
+    "正方形比例",
+    {
+      "command": 12,
+      "argument": 3,
+      "label": "正方形比例"
+    }
+  ],
+  [
+    "设置一比一",
+    {
+      "command": 12,
+      "argument": 3,
+      "label": "设置一比一"
+    }
+  ],
+  [
+    "上一首",
+    {
+      "command": 17,
+      "argument": 0,
+      "label": "上一首"
+    }
+  ],
+  [
+    "上一首歌",
+    {
+      "command": 17,
+      "argument": 0,
+      "label": "上一首歌"
+    }
+  ],
+  [
+    "切换上一首",
+    {
+      "command": 17,
+      "argument": 0,
+      "label": "切换上一首"
+    }
+  ],
+  [
+    "下一首",
+    {
+      "command": 18,
+      "argument": 0,
+      "label": "下一首"
+    }
+  ],
+  [
+    "下一首歌",
+    {
+      "command": 18,
+      "argument": 0,
+      "label": "下一首歌"
+    }
+  ],
+  [
+    "切换下一首",
+    {
+      "command": 18,
+      "argument": 0,
+      "label": "切换下一首"
+    }
+  ],
+  [
+    "换首歌听听",
+    {
+      "command": 18,
+      "argument": 0,
+      "label": "换首歌听听"
+    }
+  ],
+  [
+    "播放音乐",
+    {
+      "command": 14,
+      "argument": 1,
+      "label": "播放音乐"
+    }
+  ],
+  [
+    "继续播放音乐",
+    {
+      "command": 14,
+      "argument": 1,
+      "label": "继续播放音乐"
+    }
+  ],
+  [
+    "开始播放音乐",
+    {
+      "command": 14,
+      "argument": 1,
+      "label": "开始播放音乐"
+    }
+  ],
+  [
+    "来点音乐",
+    {
+      "command": 14,
+      "argument": 1,
+      "label": "来点音乐"
+    }
+  ],
+  [
+    "暂停音乐",
+    {
+      "command": 14,
+      "argument": 0,
+      "label": "暂停音乐"
+    }
+  ],
+  [
+    "暂停播放",
+    {
+      "command": 14,
+      "argument": 0,
+      "label": "暂停播放"
+    }
+  ],
+  [
+    "停止音乐",
+    {
+      "command": 14,
+      "argument": 0,
+      "label": "停止音乐"
+    }
+  ],
+  [
+    "播放或暂停",
+    {
+      "command": 28,
+      "argument": 0,
+      "label": "播放或暂停"
+    }
+  ],
+  [
+    "切换播放状态",
+    {
+      "command": 28,
+      "argument": 0,
+      "label": "切换播放状态"
+    }
+  ],
+  [
+    "音乐暂停或继续",
+    {
+      "command": 28,
+      "argument": 0,
+      "label": "音乐暂停或继续"
+    }
+  ],
+  [
+    "打开歌词",
+    {
+      "command": 15,
+      "argument": 1,
+      "label": "打开歌词"
+    }
+  ],
+  [
+    "显示歌词",
+    {
+      "command": 15,
+      "argument": 1,
+      "label": "显示歌词"
+    }
+  ],
+  [
+    "关闭歌词",
+    {
+      "command": 15,
+      "argument": 0,
+      "label": "关闭歌词"
+    }
+  ],
+  [
+    "隐藏歌词",
+    {
+      "command": 15,
+      "argument": 0,
+      "label": "隐藏歌词"
+    }
+  ],
+  [
+    "切换歌词",
+    {
+      "command": 26,
+      "argument": 0,
+      "label": "切换歌词"
+    }
+  ],
+  [
+    "打开歌名",
+    {
+      "command": 16,
+      "argument": 1,
+      "label": "打开歌名"
+    }
+  ],
+  [
+    "显示歌名",
+    {
+      "command": 16,
+      "argument": 1,
+      "label": "显示歌名"
+    }
+  ],
+  [
+    "关闭歌名",
+    {
+      "command": 16,
+      "argument": 0,
+      "label": "关闭歌名"
+    }
+  ],
+  [
+    "隐藏歌名",
+    {
+      "command": 16,
+      "argument": 0,
+      "label": "隐藏歌名"
+    }
+  ],
+  [
+    "切换歌名",
+    {
+      "command": 27,
+      "argument": 0,
+      "label": "切换歌名"
+    }
+  ],
+  [
+    "亮度调到零档",
+    {
+      "command": 8,
+      "argument": 0,
+      "label": "亮度调到零档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度零级",
+    {
+      "command": 8,
+      "argument": 0,
+      "label": "亮度零级",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度调到零档",
+    {
+      "command": 9,
+      "argument": 0,
+      "label": "对比度调到零档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度零级",
+    {
+      "command": 9,
+      "argument": 0,
+      "label": "对比度零级",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度调到一档",
+    {
+      "command": 8,
+      "argument": 1,
+      "label": "亮度调到一档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度一级",
+    {
+      "command": 8,
+      "argument": 1,
+      "label": "亮度一级",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度调到一档",
+    {
+      "command": 9,
+      "argument": 1,
+      "label": "对比度调到一档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度一级",
+    {
+      "command": 9,
+      "argument": 1,
+      "label": "对比度一级",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度调到二档",
+    {
+      "command": 8,
+      "argument": 2,
+      "label": "亮度调到二档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度二级",
+    {
+      "command": 8,
+      "argument": 2,
+      "label": "亮度二级",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度调到二档",
+    {
+      "command": 9,
+      "argument": 2,
+      "label": "对比度调到二档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度二级",
+    {
+      "command": 9,
+      "argument": 2,
+      "label": "对比度二级",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度调到三档",
+    {
+      "command": 8,
+      "argument": 3,
+      "label": "亮度调到三档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度三级",
+    {
+      "command": 8,
+      "argument": 3,
+      "label": "亮度三级",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度调到三档",
+    {
+      "command": 9,
+      "argument": 3,
+      "label": "对比度调到三档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度三级",
+    {
+      "command": 9,
+      "argument": 3,
+      "label": "对比度三级",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度调到四档",
+    {
+      "command": 8,
+      "argument": 4,
+      "label": "亮度调到四档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度四级",
+    {
+      "command": 8,
+      "argument": 4,
+      "label": "亮度四级",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度调到四档",
+    {
+      "command": 9,
+      "argument": 4,
+      "label": "对比度调到四档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度四级",
+    {
+      "command": 9,
+      "argument": 4,
+      "label": "对比度四级",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度调到五档",
+    {
+      "command": 8,
+      "argument": 5,
+      "label": "亮度调到五档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度五级",
+    {
+      "command": 8,
+      "argument": 5,
+      "label": "亮度五级",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度调到五档",
+    {
+      "command": 9,
+      "argument": 5,
+      "label": "对比度调到五档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度五级",
+    {
+      "command": 9,
+      "argument": 5,
+      "label": "对比度五级",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度调到六档",
+    {
+      "command": 8,
+      "argument": 6,
+      "label": "亮度调到六档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度六级",
+    {
+      "command": 8,
+      "argument": 6,
+      "label": "亮度六级",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度调到六档",
+    {
+      "command": 9,
+      "argument": 6,
+      "label": "对比度调到六档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度六级",
+    {
+      "command": 9,
+      "argument": 6,
+      "label": "对比度六级",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度调到七档",
+    {
+      "command": 8,
+      "argument": 7,
+      "label": "亮度调到七档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度七级",
+    {
+      "command": 8,
+      "argument": 7,
+      "label": "亮度七级",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度调到七档",
+    {
+      "command": 9,
+      "argument": 7,
+      "label": "对比度调到七档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度七级",
+    {
+      "command": 9,
+      "argument": 7,
+      "label": "对比度七级",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度调到八档",
+    {
+      "command": 8,
+      "argument": 8,
+      "label": "亮度调到八档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度八级",
+    {
+      "command": 8,
+      "argument": 8,
+      "label": "亮度八级",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度调到八档",
+    {
+      "command": 9,
+      "argument": 8,
+      "label": "对比度调到八档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度八级",
+    {
+      "command": 9,
+      "argument": 8,
+      "label": "对比度八级",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度调到九档",
+    {
+      "command": 8,
+      "argument": 9,
+      "label": "亮度调到九档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度九级",
+    {
+      "command": 8,
+      "argument": 9,
+      "label": "亮度九级",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度调到九档",
+    {
+      "command": 9,
+      "argument": 9,
+      "label": "对比度调到九档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度九级",
+    {
+      "command": 9,
+      "argument": 9,
+      "label": "对比度九级",
+      "kind": "level"
+    }
+  ],
+  [
+    "显示第一张",
+    {
+      "command": 2,
+      "argument": 1,
+      "label": "显示第一张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第一张图片",
+    {
+      "command": 2,
+      "argument": 1,
+      "label": "切换到第一张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第一张",
+    {
+      "command": 2,
+      "argument": 1,
+      "label": "我想看第一张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第一张图片",
+    {
+      "command": 2,
+      "argument": 1,
+      "label": "播放第一张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第一张照片",
+    {
+      "command": 2,
+      "argument": 1,
+      "label": "打开第一张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第一幅图片",
+    {
+      "command": 2,
+      "argument": 1,
+      "label": "看第一幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第二张",
+    {
+      "command": 2,
+      "argument": 2,
+      "label": "显示第二张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第二张图片",
+    {
+      "command": 2,
+      "argument": 2,
+      "label": "切换到第二张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第二张",
+    {
+      "command": 2,
+      "argument": 2,
+      "label": "我想看第二张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第二张图片",
+    {
+      "command": 2,
+      "argument": 2,
+      "label": "播放第二张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第二张照片",
+    {
+      "command": 2,
+      "argument": 2,
+      "label": "打开第二张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第二幅图片",
+    {
+      "command": 2,
+      "argument": 2,
+      "label": "看第二幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第三张",
+    {
+      "command": 2,
+      "argument": 3,
+      "label": "显示第三张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第三张图片",
+    {
+      "command": 2,
+      "argument": 3,
+      "label": "切换到第三张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第三张",
+    {
+      "command": 2,
+      "argument": 3,
+      "label": "我想看第三张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第三张图片",
+    {
+      "command": 2,
+      "argument": 3,
+      "label": "播放第三张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第三张照片",
+    {
+      "command": 2,
+      "argument": 3,
+      "label": "打开第三张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第三幅图片",
+    {
+      "command": 2,
+      "argument": 3,
+      "label": "看第三幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第四张",
+    {
+      "command": 2,
+      "argument": 4,
+      "label": "显示第四张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第四张图片",
+    {
+      "command": 2,
+      "argument": 4,
+      "label": "切换到第四张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第四张",
+    {
+      "command": 2,
+      "argument": 4,
+      "label": "我想看第四张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第四张图片",
+    {
+      "command": 2,
+      "argument": 4,
+      "label": "播放第四张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第四张照片",
+    {
+      "command": 2,
+      "argument": 4,
+      "label": "打开第四张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第四幅图片",
+    {
+      "command": 2,
+      "argument": 4,
+      "label": "看第四幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第五张",
+    {
+      "command": 2,
+      "argument": 5,
+      "label": "显示第五张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第五张图片",
+    {
+      "command": 2,
+      "argument": 5,
+      "label": "切换到第五张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第五张",
+    {
+      "command": 2,
+      "argument": 5,
+      "label": "我想看第五张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第五张图片",
+    {
+      "command": 2,
+      "argument": 5,
+      "label": "播放第五张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第五张照片",
+    {
+      "command": 2,
+      "argument": 5,
+      "label": "打开第五张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第五幅图片",
+    {
+      "command": 2,
+      "argument": 5,
+      "label": "看第五幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第六张",
+    {
+      "command": 2,
+      "argument": 6,
+      "label": "显示第六张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第六张图片",
+    {
+      "command": 2,
+      "argument": 6,
+      "label": "切换到第六张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第六张",
+    {
+      "command": 2,
+      "argument": 6,
+      "label": "我想看第六张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第六张图片",
+    {
+      "command": 2,
+      "argument": 6,
+      "label": "播放第六张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第六张照片",
+    {
+      "command": 2,
+      "argument": 6,
+      "label": "打开第六张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第六幅图片",
+    {
+      "command": 2,
+      "argument": 6,
+      "label": "看第六幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第七张",
+    {
+      "command": 2,
+      "argument": 7,
+      "label": "显示第七张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第七张图片",
+    {
+      "command": 2,
+      "argument": 7,
+      "label": "切换到第七张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第七张",
+    {
+      "command": 2,
+      "argument": 7,
+      "label": "我想看第七张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第七张图片",
+    {
+      "command": 2,
+      "argument": 7,
+      "label": "播放第七张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第七张照片",
+    {
+      "command": 2,
+      "argument": 7,
+      "label": "打开第七张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第七幅图片",
+    {
+      "command": 2,
+      "argument": 7,
+      "label": "看第七幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第八张",
+    {
+      "command": 2,
+      "argument": 8,
+      "label": "显示第八张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第八张图片",
+    {
+      "command": 2,
+      "argument": 8,
+      "label": "切换到第八张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第八张",
+    {
+      "command": 2,
+      "argument": 8,
+      "label": "我想看第八张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第八张图片",
+    {
+      "command": 2,
+      "argument": 8,
+      "label": "播放第八张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第八张照片",
+    {
+      "command": 2,
+      "argument": 8,
+      "label": "打开第八张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第八幅图片",
+    {
+      "command": 2,
+      "argument": 8,
+      "label": "看第八幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第九张",
+    {
+      "command": 2,
+      "argument": 9,
+      "label": "显示第九张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第九张图片",
+    {
+      "command": 2,
+      "argument": 9,
+      "label": "切换到第九张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第九张",
+    {
+      "command": 2,
+      "argument": 9,
+      "label": "我想看第九张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第九张图片",
+    {
+      "command": 2,
+      "argument": 9,
+      "label": "播放第九张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第九张照片",
+    {
+      "command": 2,
+      "argument": 9,
+      "label": "打开第九张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第九幅图片",
+    {
+      "command": 2,
+      "argument": 9,
+      "label": "看第九幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第十张",
+    {
+      "command": 2,
+      "argument": 10,
+      "label": "显示第十张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第十张图片",
+    {
+      "command": 2,
+      "argument": 10,
+      "label": "切换到第十张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第十张",
+    {
+      "command": 2,
+      "argument": 10,
+      "label": "我想看第十张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第十张图片",
+    {
+      "command": 2,
+      "argument": 10,
+      "label": "播放第十张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第十张照片",
+    {
+      "command": 2,
+      "argument": 10,
+      "label": "打开第十张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第十幅图片",
+    {
+      "command": 2,
+      "argument": 10,
+      "label": "看第十幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第十一张",
+    {
+      "command": 2,
+      "argument": 11,
+      "label": "显示第十一张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第十一张图片",
+    {
+      "command": 2,
+      "argument": 11,
+      "label": "切换到第十一张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第十一张",
+    {
+      "command": 2,
+      "argument": 11,
+      "label": "我想看第十一张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第十一张图片",
+    {
+      "command": 2,
+      "argument": 11,
+      "label": "播放第十一张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第十一张照片",
+    {
+      "command": 2,
+      "argument": 11,
+      "label": "打开第十一张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第十一幅图片",
+    {
+      "command": 2,
+      "argument": 11,
+      "label": "看第十一幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第十二张",
+    {
+      "command": 2,
+      "argument": 12,
+      "label": "显示第十二张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第十二张图片",
+    {
+      "command": 2,
+      "argument": 12,
+      "label": "切换到第十二张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第十二张",
+    {
+      "command": 2,
+      "argument": 12,
+      "label": "我想看第十二张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第十二张图片",
+    {
+      "command": 2,
+      "argument": 12,
+      "label": "播放第十二张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第十二张照片",
+    {
+      "command": 2,
+      "argument": 12,
+      "label": "打开第十二张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第十二幅图片",
+    {
+      "command": 2,
+      "argument": 12,
+      "label": "看第十二幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第十三张",
+    {
+      "command": 2,
+      "argument": 13,
+      "label": "显示第十三张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第十三张图片",
+    {
+      "command": 2,
+      "argument": 13,
+      "label": "切换到第十三张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第十三张",
+    {
+      "command": 2,
+      "argument": 13,
+      "label": "我想看第十三张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第十三张图片",
+    {
+      "command": 2,
+      "argument": 13,
+      "label": "播放第十三张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第十三张照片",
+    {
+      "command": 2,
+      "argument": 13,
+      "label": "打开第十三张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第十三幅图片",
+    {
+      "command": 2,
+      "argument": 13,
+      "label": "看第十三幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第十四张",
+    {
+      "command": 2,
+      "argument": 14,
+      "label": "显示第十四张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第十四张图片",
+    {
+      "command": 2,
+      "argument": 14,
+      "label": "切换到第十四张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第十四张",
+    {
+      "command": 2,
+      "argument": 14,
+      "label": "我想看第十四张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第十四张图片",
+    {
+      "command": 2,
+      "argument": 14,
+      "label": "播放第十四张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第十四张照片",
+    {
+      "command": 2,
+      "argument": 14,
+      "label": "打开第十四张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第十四幅图片",
+    {
+      "command": 2,
+      "argument": 14,
+      "label": "看第十四幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第十五张",
+    {
+      "command": 2,
+      "argument": 15,
+      "label": "显示第十五张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第十五张图片",
+    {
+      "command": 2,
+      "argument": 15,
+      "label": "切换到第十五张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第十五张",
+    {
+      "command": 2,
+      "argument": 15,
+      "label": "我想看第十五张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第十五张图片",
+    {
+      "command": 2,
+      "argument": 15,
+      "label": "播放第十五张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第十五张照片",
+    {
+      "command": 2,
+      "argument": 15,
+      "label": "打开第十五张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第十五幅图片",
+    {
+      "command": 2,
+      "argument": 15,
+      "label": "看第十五幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "显示第十六张",
+    {
+      "command": 2,
+      "argument": 16,
+      "label": "显示第十六张",
+      "kind": "image"
+    }
+  ],
+  [
+    "切换到第十六张图片",
+    {
+      "command": 2,
+      "argument": 16,
+      "label": "切换到第十六张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "我想看第十六张",
+    {
+      "command": 2,
+      "argument": 16,
+      "label": "我想看第十六张",
+      "kind": "image"
+    }
+  ],
+  [
+    "播放第十六张图片",
+    {
+      "command": 2,
+      "argument": 16,
+      "label": "播放第十六张图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "打开第十六张照片",
+    {
+      "command": 2,
+      "argument": 16,
+      "label": "打开第十六张照片",
+      "kind": "image"
+    }
+  ],
+  [
+    "看第十六幅图片",
+    {
+      "command": 2,
+      "argument": 16,
+      "label": "看第十六幅图片",
+      "kind": "image"
+    }
+  ],
+  [
+    "亮度设为零级",
+    {
+      "command": 8,
+      "argument": 0,
+      "label": "亮度设为零级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面亮度零档",
+    {
+      "command": 8,
+      "argument": 0,
+      "label": "画面亮度零档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度设为零级",
+    {
+      "command": 9,
+      "argument": 0,
+      "label": "对比度设为零级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面对比度零档",
+    {
+      "command": 9,
+      "argument": 0,
+      "label": "画面对比度零档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度设为一级",
+    {
+      "command": 8,
+      "argument": 1,
+      "label": "亮度设为一级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面亮度一档",
+    {
+      "command": 8,
+      "argument": 1,
+      "label": "画面亮度一档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度设为一级",
+    {
+      "command": 9,
+      "argument": 1,
+      "label": "对比度设为一级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面对比度一档",
+    {
+      "command": 9,
+      "argument": 1,
+      "label": "画面对比度一档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度设为二级",
+    {
+      "command": 8,
+      "argument": 2,
+      "label": "亮度设为二级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面亮度二档",
+    {
+      "command": 8,
+      "argument": 2,
+      "label": "画面亮度二档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度设为二级",
+    {
+      "command": 9,
+      "argument": 2,
+      "label": "对比度设为二级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面对比度二档",
+    {
+      "command": 9,
+      "argument": 2,
+      "label": "画面对比度二档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度设为三级",
+    {
+      "command": 8,
+      "argument": 3,
+      "label": "亮度设为三级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面亮度三档",
+    {
+      "command": 8,
+      "argument": 3,
+      "label": "画面亮度三档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度设为三级",
+    {
+      "command": 9,
+      "argument": 3,
+      "label": "对比度设为三级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面对比度三档",
+    {
+      "command": 9,
+      "argument": 3,
+      "label": "画面对比度三档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度设为四级",
+    {
+      "command": 8,
+      "argument": 4,
+      "label": "亮度设为四级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面亮度四档",
+    {
+      "command": 8,
+      "argument": 4,
+      "label": "画面亮度四档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度设为四级",
+    {
+      "command": 9,
+      "argument": 4,
+      "label": "对比度设为四级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面对比度四档",
+    {
+      "command": 9,
+      "argument": 4,
+      "label": "画面对比度四档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度设为五级",
+    {
+      "command": 8,
+      "argument": 5,
+      "label": "亮度设为五级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面亮度五档",
+    {
+      "command": 8,
+      "argument": 5,
+      "label": "画面亮度五档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度设为五级",
+    {
+      "command": 9,
+      "argument": 5,
+      "label": "对比度设为五级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面对比度五档",
+    {
+      "command": 9,
+      "argument": 5,
+      "label": "画面对比度五档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度设为六级",
+    {
+      "command": 8,
+      "argument": 6,
+      "label": "亮度设为六级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面亮度六档",
+    {
+      "command": 8,
+      "argument": 6,
+      "label": "画面亮度六档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度设为六级",
+    {
+      "command": 9,
+      "argument": 6,
+      "label": "对比度设为六级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面对比度六档",
+    {
+      "command": 9,
+      "argument": 6,
+      "label": "画面对比度六档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度设为七级",
+    {
+      "command": 8,
+      "argument": 7,
+      "label": "亮度设为七级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面亮度七档",
+    {
+      "command": 8,
+      "argument": 7,
+      "label": "画面亮度七档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度设为七级",
+    {
+      "command": 9,
+      "argument": 7,
+      "label": "对比度设为七级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面对比度七档",
+    {
+      "command": 9,
+      "argument": 7,
+      "label": "画面对比度七档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度设为八级",
+    {
+      "command": 8,
+      "argument": 8,
+      "label": "亮度设为八级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面亮度八档",
+    {
+      "command": 8,
+      "argument": 8,
+      "label": "画面亮度八档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度设为八级",
+    {
+      "command": 9,
+      "argument": 8,
+      "label": "对比度设为八级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面对比度八档",
+    {
+      "command": 9,
+      "argument": 8,
+      "label": "画面对比度八档",
+      "kind": "level"
+    }
+  ],
+  [
+    "亮度设为九级",
+    {
+      "command": 8,
+      "argument": 9,
+      "label": "亮度设为九级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面亮度九档",
+    {
+      "command": 8,
+      "argument": 9,
+      "label": "画面亮度九档",
+      "kind": "level"
+    }
+  ],
+  [
+    "对比度设为九级",
+    {
+      "command": 9,
+      "argument": 9,
+      "label": "对比度设为九级",
+      "kind": "level"
+    }
+  ],
+  [
+    "画面对比度九档",
+    {
+      "command": 9,
+      "argument": 9,
+      "label": "画面对比度九档",
+      "kind": "level"
+    }
+  ],
+  [
+    "播放童话镇",
+    {
+      "command": 13,
+      "argument": 1,
+      "label": "播放童话镇",
+      "kind": "track"
+    }
+  ],
+  [
+    "我想听童话镇",
+    {
+      "command": 13,
+      "argument": 1,
+      "label": "我想听童话镇",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放第一首",
+    {
+      "command": 13,
+      "argument": 1,
+      "label": "播放第一首",
+      "kind": "track"
+    }
+  ],
+  [
+    "来一首童话镇",
+    {
+      "command": 13,
+      "argument": 1,
+      "label": "来一首童话镇",
+      "kind": "track"
+    }
+  ],
+  [
+    "切换到童话镇",
+    {
+      "command": 13,
+      "argument": 1,
+      "label": "切换到童话镇",
+      "kind": "track"
+    }
+  ],
+  [
+    "放一首童话镇",
+    {
+      "command": 13,
+      "argument": 1,
+      "label": "放一首童话镇",
+      "kind": "track"
+    }
+  ],
+  [
+    "我要听童话镇",
+    {
+      "command": 13,
+      "argument": 1,
+      "label": "我要听童话镇",
+      "kind": "track"
+    }
+  ],
+  [
+    "给我播放童话镇",
+    {
+      "command": 13,
+      "argument": 1,
+      "label": "给我播放童话镇",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放爱的回归线",
+    {
+      "command": 13,
+      "argument": 2,
+      "label": "播放爱的回归线",
+      "kind": "track"
+    }
+  ],
+  [
+    "我想听爱的回归线",
+    {
+      "command": 13,
+      "argument": 2,
+      "label": "我想听爱的回归线",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放第二首",
+    {
+      "command": 13,
+      "argument": 2,
+      "label": "播放第二首",
+      "kind": "track"
+    }
+  ],
+  [
+    "来一首爱的回归线",
+    {
+      "command": 13,
+      "argument": 2,
+      "label": "来一首爱的回归线",
+      "kind": "track"
+    }
+  ],
+  [
+    "切换到爱的回归线",
+    {
+      "command": 13,
+      "argument": 2,
+      "label": "切换到爱的回归线",
+      "kind": "track"
+    }
+  ],
+  [
+    "放一首爱的回归线",
+    {
+      "command": 13,
+      "argument": 2,
+      "label": "放一首爱的回归线",
+      "kind": "track"
+    }
+  ],
+  [
+    "我要听爱的回归线",
+    {
+      "command": 13,
+      "argument": 2,
+      "label": "我要听爱的回归线",
+      "kind": "track"
+    }
+  ],
+  [
+    "给我播放爱的回归线",
+    {
+      "command": 13,
+      "argument": 2,
+      "label": "给我播放爱的回归线",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放红色高跟鞋",
+    {
+      "command": 13,
+      "argument": 3,
+      "label": "播放红色高跟鞋",
+      "kind": "track"
+    }
+  ],
+  [
+    "我想听红色高跟鞋",
+    {
+      "command": 13,
+      "argument": 3,
+      "label": "我想听红色高跟鞋",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放第三首",
+    {
+      "command": 13,
+      "argument": 3,
+      "label": "播放第三首",
+      "kind": "track"
+    }
+  ],
+  [
+    "来一首红色高跟鞋",
+    {
+      "command": 13,
+      "argument": 3,
+      "label": "来一首红色高跟鞋",
+      "kind": "track"
+    }
+  ],
+  [
+    "切换到红色高跟鞋",
+    {
+      "command": 13,
+      "argument": 3,
+      "label": "切换到红色高跟鞋",
+      "kind": "track"
+    }
+  ],
+  [
+    "放一首红色高跟鞋",
+    {
+      "command": 13,
+      "argument": 3,
+      "label": "放一首红色高跟鞋",
+      "kind": "track"
+    }
+  ],
+  [
+    "我要听红色高跟鞋",
+    {
+      "command": 13,
+      "argument": 3,
+      "label": "我要听红色高跟鞋",
+      "kind": "track"
+    }
+  ],
+  [
+    "给我播放红色高跟鞋",
+    {
+      "command": 13,
+      "argument": 3,
+      "label": "给我播放红色高跟鞋",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放喜欢你",
+    {
+      "command": 13,
+      "argument": 4,
+      "label": "播放喜欢你",
+      "kind": "track"
+    }
+  ],
+  [
+    "我想听喜欢你",
+    {
+      "command": 13,
+      "argument": 4,
+      "label": "我想听喜欢你",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放第四首",
+    {
+      "command": 13,
+      "argument": 4,
+      "label": "播放第四首",
+      "kind": "track"
+    }
+  ],
+  [
+    "来一首喜欢你",
+    {
+      "command": 13,
+      "argument": 4,
+      "label": "来一首喜欢你",
+      "kind": "track"
+    }
+  ],
+  [
+    "切换到喜欢你",
+    {
+      "command": 13,
+      "argument": 4,
+      "label": "切换到喜欢你",
+      "kind": "track"
+    }
+  ],
+  [
+    "放一首喜欢你",
+    {
+      "command": 13,
+      "argument": 4,
+      "label": "放一首喜欢你",
+      "kind": "track"
+    }
+  ],
+  [
+    "我要听喜欢你",
+    {
+      "command": 13,
+      "argument": 4,
+      "label": "我要听喜欢你",
+      "kind": "track"
+    }
+  ],
+  [
+    "给我播放喜欢你",
+    {
+      "command": 13,
+      "argument": 4,
+      "label": "给我播放喜欢你",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放静悄悄",
+    {
+      "command": 13,
+      "argument": 5,
+      "label": "播放静悄悄",
+      "kind": "track"
+    }
+  ],
+  [
+    "我想听静悄悄",
+    {
+      "command": 13,
+      "argument": 5,
+      "label": "我想听静悄悄",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放第五首",
+    {
+      "command": 13,
+      "argument": 5,
+      "label": "播放第五首",
+      "kind": "track"
+    }
+  ],
+  [
+    "来一首静悄悄",
+    {
+      "command": 13,
+      "argument": 5,
+      "label": "来一首静悄悄",
+      "kind": "track"
+    }
+  ],
+  [
+    "切换到静悄悄",
+    {
+      "command": 13,
+      "argument": 5,
+      "label": "切换到静悄悄",
+      "kind": "track"
+    }
+  ],
+  [
+    "放一首静悄悄",
+    {
+      "command": 13,
+      "argument": 5,
+      "label": "放一首静悄悄",
+      "kind": "track"
+    }
+  ],
+  [
+    "我要听静悄悄",
+    {
+      "command": 13,
+      "argument": 5,
+      "label": "我要听静悄悄",
+      "kind": "track"
+    }
+  ],
+  [
+    "给我播放静悄悄",
+    {
+      "command": 13,
+      "argument": 5,
+      "label": "给我播放静悄悄",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放那时雨",
+    {
+      "command": 13,
+      "argument": 6,
+      "label": "播放那时雨",
+      "kind": "track"
+    }
+  ],
+  [
+    "我想听那时雨",
+    {
+      "command": 13,
+      "argument": 6,
+      "label": "我想听那时雨",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放第六首",
+    {
+      "command": 13,
+      "argument": 6,
+      "label": "播放第六首",
+      "kind": "track"
+    }
+  ],
+  [
+    "来一首那时雨",
+    {
+      "command": 13,
+      "argument": 6,
+      "label": "来一首那时雨",
+      "kind": "track"
+    }
+  ],
+  [
+    "切换到那时雨",
+    {
+      "command": 13,
+      "argument": 6,
+      "label": "切换到那时雨",
+      "kind": "track"
+    }
+  ],
+  [
+    "放一首那时雨",
+    {
+      "command": 13,
+      "argument": 6,
+      "label": "放一首那时雨",
+      "kind": "track"
+    }
+  ],
+  [
+    "我要听那时雨",
+    {
+      "command": 13,
+      "argument": 6,
+      "label": "我要听那时雨",
+      "kind": "track"
+    }
+  ],
+  [
+    "给我播放那时雨",
+    {
+      "command": 13,
+      "argument": 6,
+      "label": "给我播放那时雨",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放心似烟火",
+    {
+      "command": 13,
+      "argument": 7,
+      "label": "播放心似烟火",
+      "kind": "track"
+    }
+  ],
+  [
+    "我想听心似烟火",
+    {
+      "command": 13,
+      "argument": 7,
+      "label": "我想听心似烟火",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放第七首",
+    {
+      "command": 13,
+      "argument": 7,
+      "label": "播放第七首",
+      "kind": "track"
+    }
+  ],
+  [
+    "来一首心似烟火",
+    {
+      "command": 13,
+      "argument": 7,
+      "label": "来一首心似烟火",
+      "kind": "track"
+    }
+  ],
+  [
+    "切换到心似烟火",
+    {
+      "command": 13,
+      "argument": 7,
+      "label": "切换到心似烟火",
+      "kind": "track"
+    }
+  ],
+  [
+    "放一首心似烟火",
+    {
+      "command": 13,
+      "argument": 7,
+      "label": "放一首心似烟火",
+      "kind": "track"
+    }
+  ],
+  [
+    "我要听心似烟火",
+    {
+      "command": 13,
+      "argument": 7,
+      "label": "我要听心似烟火",
+      "kind": "track"
+    }
+  ],
+  [
+    "给我播放心似烟火",
+    {
+      "command": 13,
+      "argument": 7,
+      "label": "给我播放心似烟火",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放恶作剧",
+    {
+      "command": 13,
+      "argument": 8,
+      "label": "播放恶作剧",
+      "kind": "track"
+    }
+  ],
+  [
+    "我想听恶作剧",
+    {
+      "command": 13,
+      "argument": 8,
+      "label": "我想听恶作剧",
+      "kind": "track"
+    }
+  ],
+  [
+    "播放第八首",
+    {
+      "command": 13,
+      "argument": 8,
+      "label": "播放第八首",
+      "kind": "track"
+    }
+  ],
+  [
+    "来一首恶作剧",
+    {
+      "command": 13,
+      "argument": 8,
+      "label": "来一首恶作剧",
+      "kind": "track"
+    }
+  ],
+  [
+    "切换到恶作剧",
+    {
+      "command": 13,
+      "argument": 8,
+      "label": "切换到恶作剧",
+      "kind": "track"
+    }
+  ],
+  [
+    "放一首恶作剧",
+    {
+      "command": 13,
+      "argument": 8,
+      "label": "放一首恶作剧",
+      "kind": "track"
+    }
+  ],
+  [
+    "我要听恶作剧",
+    {
+      "command": 13,
+      "argument": 8,
+      "label": "我要听恶作剧",
+      "kind": "track"
+    }
+  ],
+  [
+    "给我播放恶作剧",
+    {
+      "command": 13,
+      "argument": 8,
+      "label": "给我播放恶作剧",
+      "kind": "track"
+    }
+  ],
+  [
+    "再换一张",
+    {
+      "command": 4,
+      "argument": 0,
+      "label": "再换一张"
+    }
+  ],
+  [
+    "往后换张图",
+    {
+      "command": 4,
+      "argument": 0,
+      "label": "往后换张图"
+    }
+  ],
+  [
+    "往前换张图",
+    {
+      "command": 5,
+      "argument": 0,
+      "label": "往前换张图"
+    }
+  ],
+  [
+    "回到前一张图片",
+    {
+      "command": 5,
+      "argument": 0,
+      "label": "回到前一张图片"
+    }
+  ],
+  [
+    "循环展示图片",
+    {
+      "command": 3,
+      "argument": 0,
+      "label": "循环展示图片"
+    }
+  ],
+  [
+    "开启图片轮播",
+    {
+      "command": 3,
+      "argument": 0,
+      "label": "开启图片轮播"
+    }
+  ],
+  [
+    "固定当前图片",
+    {
+      "command": 6,
+      "argument": 0,
+      "label": "固定当前图片"
+    }
+  ],
+  [
+    "暂停图片轮播",
+    {
+      "command": 6,
+      "argument": 0,
+      "label": "暂停图片轮播"
+    }
+  ],
+  [
+    "取消切换特效",
+    {
+      "command": 7,
+      "argument": 0,
+      "label": "取消切换特效"
+    }
+  ],
+  [
+    "图片直接跳转",
+    {
+      "command": 7,
+      "argument": 0,
+      "label": "图片直接跳转"
+    }
+  ],
+  [
+    "图片柔和过渡",
+    {
+      "command": 7,
+      "argument": 1,
+      "label": "图片柔和过渡"
+    }
+  ],
+  [
+    "开启渐隐渐现",
+    {
+      "command": 7,
+      "argument": 1,
+      "label": "开启渐隐渐现"
+    }
+  ],
+  [
+    "图片滑过去",
+    {
+      "command": 7,
+      "argument": 2,
+      "label": "图片滑过去"
+    }
+  ],
+  [
+    "开启横向滑动",
+    {
+      "command": 7,
+      "argument": 2,
+      "label": "开启横向滑动"
+    }
+  ],
+  [
+    "给我看看镜头",
+    {
+      "command": 29,
+      "argument": 1,
+      "label": "给我看看镜头"
+    }
+  ],
+  [
+    "我要看实时画面",
+    {
+      "command": 29,
+      "argument": 1,
+      "label": "我要看实时画面"
+    }
+  ],
+  [
+    "回到照片界面",
+    {
+      "command": 29,
+      "argument": 0,
+      "label": "回到照片界面"
+    }
+  ],
+  [
+    "退出实时画面",
+    {
+      "command": 29,
+      "argument": 0,
+      "label": "退出实时画面"
+    }
+  ],
+  [
+    "直接换下一首",
+    {
+      "command": 18,
+      "argument": 0,
+      "label": "直接换下一首"
+    }
+  ],
+  [
+    "放下一首歌",
+    {
+      "command": 18,
+      "argument": 0,
+      "label": "放下一首歌"
+    }
+  ],
+  [
+    "重听上一首歌",
+    {
+      "command": 17,
+      "argument": 0,
+      "label": "重听上一首歌"
+    }
+  ],
+  [
+    "放前一首歌",
+    {
+      "command": 17,
+      "argument": 0,
+      "label": "放前一首歌"
+    }
+  ],
+  [
+    "音乐继续放",
+    {
+      "command": 14,
+      "argument": 1,
+      "label": "音乐继续放"
+    }
+  ],
+  [
+    "把歌曲放起来",
+    {
+      "command": 14,
+      "argument": 1,
+      "label": "把歌曲放起来"
+    }
+  ],
+  [
+    "音乐先暂停",
+    {
+      "command": 14,
+      "argument": 0,
+      "label": "音乐先暂停"
+    }
+  ],
+  [
+    "暂停这首歌曲",
+    {
+      "command": 14,
+      "argument": 0,
+      "label": "暂停这首歌曲"
+    }
+  ],
+  [
+    "把歌词打开",
+    {
+      "command": 15,
+      "argument": 1,
+      "label": "把歌词打开"
+    }
+  ],
+  [
+    "我要看歌词",
+    {
+      "command": 15,
+      "argument": 1,
+      "label": "我要看歌词"
+    }
+  ],
+  [
+    "把歌词收起来",
+    {
+      "command": 15,
+      "argument": 0,
+      "label": "把歌词收起来"
+    }
+  ],
+  [
+    "歌词先关掉",
+    {
+      "command": 15,
+      "argument": 0,
+      "label": "歌词先关掉"
+    }
+  ],
+  [
+    "把歌名显示出来",
+    {
+      "command": 16,
+      "argument": 1,
+      "label": "把歌名显示出来"
+    }
+  ],
+  [
+    "看看歌曲名称",
+    {
+      "command": 16,
+      "argument": 1,
+      "label": "看看歌曲名称"
+    }
+  ],
+  [
+    "把歌名隐藏起来",
+    {
+      "command": 16,
+      "argument": 0,
+      "label": "把歌名隐藏起来"
+    }
+  ],
+  [
+    "歌名先关掉",
+    {
+      "command": 16,
+      "argument": 0,
+      "label": "歌名先关掉"
+    }
+  ],
+  [
+    "确认一下连接",
+    {
+      "command": 1,
+      "argument": 0,
+      "label": "确认一下连接"
+    }
+  ],
+  [
+    "查看播放器状态",
+    {
+      "command": 1,
+      "argument": 0,
+      "label": "查看播放器状态"
+    }
+  ],
+  [
+    "图片用最大尺寸",
+    {
+      "command": 11,
+      "argument": 0,
+      "label": "图片用最大尺寸"
+    }
+  ],
+  [
+    "显示完整大图",
+    {
+      "command": 11,
+      "argument": 0,
+      "label": "显示完整大图"
+    }
+  ],
+  [
+    "切成宽屏比例",
+    {
+      "command": 12,
+      "argument": 2,
+      "label": "切成宽屏比例"
+    }
+  ],
+  [
+    "图片使用十六比九",
+    {
+      "command": 12,
+      "argument": 2,
+      "label": "图片使用十六比九"
+    }
+  ],
+  [
+    "讲个小故事",
+    {
+      "reply": "小蜗牛每天向前走一点，终于爬到了花园。慢一点没关系，方向对了就继续。"
+    }
+  ],
+  [
+    "再讲个小故事",
+    {
+      "reply": "小星星以为自己不够亮，直到有人抬头说，今晚的星空真好看。你也有自己的光。"
+    }
+  ],
+  [
+    "讲个程序员笑话",
+    {
+      "reply": "程序员去买菜，老板问要多少，他说，先给我一个测试样品。"
+    }
+  ],
+  [
+    "讲个动物笑话",
+    {
+      "reply": "小企鹅为什么走路摇摇摆摆？因为它把每一步都走成了舞步。"
+    }
+  ],
+  [
+    "说句土味情话",
+    {
+      "reply": "你知道我最喜欢什么画面吗？是你听歌时开心的样子。"
+    }
+  ],
+  [
+    "给我加个油",
+    {
+      "reply": "加油，再试一次！每次调通一点，离成功就近一点。"
+    }
+  ],
+  [
+    "我有点紧张",
+    {
+      "reply": "先慢慢呼吸，给自己一点时间，一步一步来就好。"
+    }
+  ],
+  [
+    "我有点无聊",
+    {
+      "reply": "可以听一首歌，猜个谜语，或者打开摄像头看看身边的新画面。"
+    }
+  ],
+  [
+    "怎么放松一下",
+    {
+      "reply": "伸个懒腰，看看窗外，再放一首自己喜欢的歌。"
+    }
+  ],
+  [
+    "来个顺口溜",
+    {
+      "reply": "图片一张张，音乐轻轻唱，小美听你讲，快乐不打烊。"
+    }
+  ],
+  [
+    "背一首登鹳雀楼",
+    {
+      "reply": "白日依山尽，黄河入海流。欲穷千里目，更上一层楼。"
+    }
+  ],
+  [
+    "背一首悯农",
+    {
+      "reply": "锄禾日当午，汗滴禾下土。谁知盘中餐，粒粒皆辛苦。"
+    }
+  ],
+  [
+    "背一首咏鹅",
+    {
+      "reply": "鹅，鹅，鹅，曲项向天歌。白毛浮绿水，红掌拨清波。"
+    }
+  ],
+  [
+    "七乘八等于几",
+    {
+      "reply": "七乘八等于五十六。"
+    }
+  ],
+  [
+    "摄像头画面在哪里",
+    {
+      "reply": "摄像头实时画面显示在连接 FPGA 的 HDMI 显示器上。上位机可以切换画面来源。"
+    }
+  ],
+  [
+    "怎么回到图片",
+    {
+      "reply": "说返回相册，或者在上位机点击返回图片与音乐。"
+    }
+  ],
+  [
+    "语音能控制哪些属性",
+    {
+      "reply": "可以控制图片尺寸、比例、亮度、对比度和转场，还能切歌、控制歌词歌名，以及切换摄像头。"
+    }
+  ]
+]);
+  let voiceRecognition = null;
+  let voiceListening = false;
+  let voiceActionSeq = 0;
+  let device, writeCharacteristic, notifyCharacteristic;
+  let demoMode = false;
+  let rxBuffer = [];
+  let rxFrameCount = 0;
+  let lastRxAt = 0;
+  let writeQueue = Promise.resolve();
+  let noticeSending = false;
+  let linkToken = 0;
+  let connectionPending = false;
+  let selectingDevice = false;
+  let lastMusicGridKey = '';
+  let lastImageGridKey = '';
+  let pendingDisplayMode = null;
+  let displayModeRequestId = 0, displayModeTimer = null;
+  const BOUND_DEVICE_KEY = 'fpgaBoundBleDeviceId';
+  const emptyState = () => ({ count: 0, current: 0, auto: false, scanDone: false, map: 0,
+    brightness: 9, contrast: 5, effect: 0, size: 0, aspect: 0,
+    track: 0, trackCount: 0, trackMap: 0, playing: true,
+    lyricEnabled: true, titleEnabled: true, lyricValid: false, titleValid: false,
+    spectrumEnabled: true, spectrumStatusReady: false,
+    volume: 10, muted: false, volumeStatusReady: false,
+    musicStatusReady: false, displayMode: 0, displayModeReady: false,
+    noticeShow: false, noticeUrgent: false,
+    noticeSpeed: 1, noticeDuration: 0, noticeWidth: 0 });
+  let state = emptyState();
+
+  function hex(bytes) {
+    return [...bytes].map(v => v.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+  }
+
+  function log(text) {
+    const stamp = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    const lines = `${els.log.textContent}\n[${stamp}] ${text}`.split('\n');
+    els.log.textContent = lines.slice(-200).join('\n');
+    els.log.scrollTop = els.log.scrollHeight;
+  }
+
+  function savedDeviceId() {
+    try { return localStorage.getItem(BOUND_DEVICE_KEY); }
+    catch { return null; }
+  }
+
+  function saveDeviceId(id) {
+    try { localStorage.setItem(BOUND_DEVICE_KEY, id); }
+    catch { log('浏览器未允许保存设备绑定，下次需手动连接'); }
+  }
+
+  function isReady() {
+    return demoMode || !!(writeCharacteristic && device?.gatt?.connected);
+  }
+
+  function updateAvailability() {
+    const ready = isReady();
+    const playerReady = ready && !(state.displayModeReady && state.displayMode !== 0);
+    document.querySelectorAll('[data-quick-command]').forEach(control => control.disabled = !playerReady);
+    document.querySelectorAll('[data-player-hint]').forEach(hint => hint.hidden = !(ready && !playerReady));
+    $('healthRefreshBtn').disabled = !ready;
+    updateLinkHealth();
+    els.connectBtn.disabled = connectionPending || selectingDevice;
+    els.demoBtn.disabled = els.forgetBtn.disabled = connectionPending || selectingDevice;
+    els.queryBtn.disabled = !ready;
+    document.querySelectorAll('[data-display-mode]').forEach(control => control.disabled = !ready);
+    for (const control of [els.prevBtn, els.nextBtn, els.manualBtn, els.autoBtn])
+      control.disabled = !playerReady;
+    for (const control of [els.brightnessRange, els.contrastRange,
+      ...document.querySelectorAll('.effect-btn')]) control.disabled = !playerReady;
+    els.sizeSelect.disabled = els.aspectSelect.disabled = !playerReady;
+    for (const control of [els.musicPrevBtn, els.musicNextBtn])
+      control.disabled = !playerReady || !state.musicStatusReady;
+    for (const control of [els.musicPlayBtn, els.lyricToggleBtn, els.titleToggleBtn])
+      control.disabled = !playerReady;
+    els.volumeRange.disabled = els.muteBtn.disabled = !ready || !state.volumeStatusReady;
+    for (const control of [els.videoVolumeRange,els.videoVolumeDown,els.videoVolumeUp,els.videoMuteBtn]) control.disabled = !ready || !state.volumeStatusReady;
+    els.spectrumToggleBtn.disabled = !playerReady || !state.spectrumStatusReady;
+    els.sendNoticeBtn.disabled = !ready || noticeSending;
+    els.clearNoticeBtn.disabled = !ready || noticeSending;
+    els.voiceMicBtn.disabled = !SpeechRecognitionAPI;
+  }
+
+  function setConnected(online, name = 'W02 蓝牙模块', simulation = false) {
+    if (!online) stopVoiceRecognition();
+    els.statusPill.textContent = simulation ? '演示模式' : online ? '已连接' : '未连接';
+    els.statusPill.classList.toggle('online', online);
+    if (!online || simulation) els.statusPill.removeAttribute('title');
+    els.deviceName.textContent = name;
+    updateAvailability();
+  }
+
+  function render() {
+    updateAvailability();
+    els.currentText.textContent = state.current ? `${state.current} / ${state.count}` : '—';
+    const displayModeText = !isReady() ? '等待连接' :
+      !state.displayModeReady ? '等待模式状态' :
+      state.displayMode === 2 ? 'TF 卡视频模式' : state.displayMode === 1 ? '摄像头实时画面' : '图片与音乐';
+    els.modeText.textContent = displayModeText;
+    els.modeStatus.textContent = pendingDisplayMode === null ? displayModeText : '切换中，等待设备确认';
+    els.cameraModeText.textContent = displayModeText;
+    els.cameraHint.textContent = !isReady() ? '连接 W02 后可切换，设备回传会显示当前模式。' :
+      pendingDisplayMode !== null ? '切换指令已发送，正在等待 FPGA 回传当前模式。' :
+      state.displayModeReady && state.displayMode === 2 ? ((state.videoFlags&4) ? '视频读取失败：请检查 VIDEO 目录中的 01.MVI 与 00.wav，确认文件配套且格式正确。' : (state.videoFlags&2) ? '视频读取中，设备输出至 HDMI；可调节音量或返回图片音乐。' : (state.videoFlags&1) ? '视频文件已找到；播放结束后保留最后一帧，返回图片音乐后可重新播放。' : '正在扫描 TF 卡视频文件…') :
+      state.displayModeReady ? `FPGA 当前输出：${displayModeText}。按键切换也会同步到这里。` :
+      '已连接，等待 FPGA 模式回传；请确认下载了支持摄像头切换的新 bit。';
+    document.querySelectorAll('[data-display-mode]').forEach(control =>
+      control.classList.toggle('active', state.displayModeReady && pendingDisplayMode === null &&
+        Number(control.dataset.displayMode) === state.displayMode));
+    els.scanText.textContent = !isReady() ? '等待连接' : state.scanDone ? '目录扫描完成' : rxFrameCount ? '正在扫描TF卡' : '等待 FPGA 回传';
+    els.countText.textContent = `${state.count} 张`;
+    els.overviewImages.textContent = state.scanDone ? `${state.count} 张可播放` : '等待扫描';
+    els.overviewMusic.textContent = state.musicStatusReady
+      ? `曲目 ${String(state.track || 0).padStart(2, '0')} · ${state.playing ? '播放中' : '已暂停'}` : '等待状态';
+    els.overviewNotice.textContent = state.noticeShow
+      ? (state.noticeUrgent ? '紧急通知显示中' : '普通通知显示中') : '暂无通知';
+    els.manualBtn.classList.toggle('active', !state.auto && state.scanDone);
+    els.autoBtn.classList.toggle('active', state.auto);
+    if (document.activeElement !== els.brightnessRange) {
+      els.brightnessRange.value = state.brightness;
+      els.brightnessValue.textContent = `${state.brightness}级`;
+    }
+    if (document.activeElement !== els.contrastRange) {
+      els.contrastRange.value = state.contrast;
+      els.contrastValue.textContent = `${state.contrast}级`;
+    }
+    els.effectValue.textContent = ['直切', '淡入淡出', '滑动'][state.effect] || '直切';
+    els.sizeSelect.value = state.size;
+    els.aspectSelect.value = state.aspect;
+    els.sizeValue.textContent = ['640 × 480', '512 × 384', '320 × 240'][state.size] || '640 × 480';
+    els.aspectValue.textContent = ['原始比例', '4:3', '16:9', '1:1'][state.aspect] || '原始比例';
+    els.musicSummary.textContent = state.musicStatusReady
+      ? `当前曲目 ${state.track || '—'} · 共 ${state.trackCount} 首 · ${state.playing ? '播放中' : '已暂停'}`
+      : '未收到曲目目录 · 可按编号尝试';
+    els.musicPlayBtn.textContent = !state.musicStatusReady ? '开始播放' : state.playing ? '暂停播放' : '继续播放';
+    els.lyricToggleBtn.textContent = state.lyricEnabled ? '关闭歌词' : '开启歌词';
+    if (document.activeElement !== els.volumeRange) els.volumeRange.value = state.volume;
+    els.volumeValue.textContent = state.volumeStatusReady ? `${state.volume * 10}%` : '等待新版状态';
+    if (document.activeElement !== els.videoVolumeRange) els.videoVolumeRange.value = state.volume;
+    els.videoVolumeValue.textContent = state.volumeStatusReady ? `${state.volume * 10}%${state.muted ? ' · 静音' : ''}` : '等待设备状态';
+    els.videoMuteBtn.textContent = state.muted ? '取消静音' : '静音';
+    els.muteBtn.textContent = state.muted ? '取消静音' : '静音';
+    els.muteValue.textContent = !state.volumeStatusReady ? '等待状态' : state.muted || state.volume === 0 ? '无声' : '有声';
+    els.spectrumToggleBtn.textContent = state.spectrumStatusReady ? (state.spectrumEnabled ? '关闭频谱' : '开启频谱') : state.musicStatusReady ? '需要新版固件' : '等待设备状态';
+    els.spectrumValue.textContent = !state.spectrumStatusReady ? '等待新版状态' : state.spectrumEnabled ? '已开启' : '已关闭';
+    els.titleToggleBtn.textContent = state.titleEnabled ? '关闭歌名' : '开启歌名';
+    els.lyricValue.textContent = !state.musicStatusReady ? '等待状态' :
+      state.lyricEnabled ? (state.lyricValid ? '已显示' : '已开启') : '已关闭';
+    els.titleValue.textContent = !state.musicStatusReady ? '等待状态' :
+      state.titleEnabled ? (state.titleValid ? '已显示' : '已开启') : '已关闭';
+    const musicGridKey = `${isReady()}|${state.musicStatusReady}|${state.trackMap}|${state.track}|${state.displayModeReady}|${state.displayMode}`;
+    if (musicGridKey !== lastMusicGridKey) {
+      lastMusicGridKey = musicGridKey;
+      els.musicTrackGrid.innerHTML = '';
+      for (let i = 1; i <= 16 && (isReady() || state.musicStatusReady); i++) {
+        if (state.musicStatusReady && !(state.trackMap & (1 << (i - 1)))) continue;
+        const button = document.createElement('button');
+        button.className = 'image-btn' + (state.track === i ? ' current' : '');
+        button.textContent = `${String(i).padStart(2, '0')} · ${songNames[i - 1] || '曲目 ' + i}`;
+        button.disabled = !isReady() || (state.displayModeReady && state.displayMode !== 0);
+        button.onclick = () => sendCommand(0x0D, i);
+        els.musicTrackGrid.appendChild(button);
+      }
+      if (!els.musicTrackGrid.children.length)
+        els.musicTrackGrid.innerHTML = `<div class="empty">${isReady() ? '暂无已识别曲目' : '连接后读取曲目目录'}</div>`;
+    }
+    document.querySelectorAll('.effect-btn').forEach(button =>
+      button.classList.toggle('active', Number(button.dataset.effect) === state.effect));
+    if (!noticeSending) els.noticeProgress.textContent = state.noticeShow
+      ? `${state.noticeUrgent ? '紧急' : '普通'}通知正在显示 · ${['慢速','正常','快速'][state.noticeSpeed] || '正常'} · ${state.noticeDuration ? `${[0,10,30,60][state.noticeDuration]}秒后取消` : '持续显示'}`
+      : '当前没有显示手机通知';
+    const imageGridKey = `${isReady()}|${state.count}|${state.current}|${state.map}|${state.displayModeReady}|${state.displayMode}`;
+    if (imageGridKey !== lastImageGridKey) {
+      lastImageGridKey = imageGridKey;
+      els.imageGrid.innerHTML = '';
+      if (!state.count) {
+        els.imageGrid.innerHTML = '<div class="empty">队列中暂无图片</div>';
+      } else for (let i = 1; i <= Math.min(state.count, 16); i++) {
+        if (state.map && !(state.map & (1 << (i - 1)))) continue;
+        const button = document.createElement('button');
+        button.className = 'image-btn' + (state.current === i ? ' current' : '');
+        button.textContent = i;
+        button.disabled = !isReady() || (state.displayModeReady && state.displayMode !== 0);
+        button.onclick = () => sendCommand(0x02, i);
+        els.imageGrid.appendChild(button);
+      }
+    }
+  }
+
+  function parseIncoming(chunk) {
+    rxBuffer.push(...chunk);
+    let needsRender = false;
+    let received = false;
+    while (rxBuffer.length >= 8) {
+      const start = rxBuffer.indexOf(0x5A);
+      if (start < 0) { rxBuffer.length = 0; break; }
+      if (start) rxBuffer.splice(0, start);
+      if (rxBuffer.length < 8) break;
+      const frame = rxBuffer.slice(0, 8);
+      const check = frame.slice(0, 7).reduce((a, b) => a ^ b, 0);
+      if ((frame[1] < 0x81 || frame[1] > 0x87) || check !== frame[7]) {
+        rxBuffer.shift();
+        continue;
+      }
+      rxBuffer.splice(0, 8);
+      const nextState = frame[1] === 0x81 ? {
+        ...state, count: frame[2], current: frame[3],
+        auto: !!(frame[4] & 1), scanDone: !!(frame[4] & 2),
+        map: frame[5] | (frame[6] << 8)
+      } : frame[1] === 0x82 ? {
+        ...state, brightness: Math.min(frame[2], 9), contrast: Math.min(frame[3], 9),
+        effect: Math.min(frame[4], 2)
+      } : frame[1] === 0x83 ? {
+        ...state, noticeShow: !!(frame[2] & 1), noticeUrgent: !!(frame[2] & 2),
+        noticeSpeed: (frame[2] >> 2) & 3, noticeDuration: (frame[2] >> 4) & 3,
+        noticeWidth: frame[3] | ((frame[4] & 3) << 8)
+      } : frame[1] === 0x84 ? {
+        ...state, size: Math.min(frame[2], 2), aspect: Math.min(frame[3], 3)
+      } : frame[1] === 0x85 ? {
+        ...state, track: frame[2], trackCount: frame[3],
+        playing: !!(frame[4] & 1), lyricEnabled: !!(frame[4] & 2),
+        titleEnabled: !!(frame[4] & 4), lyricValid: !!(frame[4] & 8),
+        titleValid: !!(frame[4] & 16), spectrumEnabled: !!(frame[4] & 32),
+        spectrumStatusReady: !!(frame[4] & 64), trackMap: frame[5] | (frame[6] << 8),
+        musicStatusReady: true
+      } : {
+        ...state, ...(frame[1] === 0x87 ? {volume: Math.min(frame[2], 10), muted: !!(frame[3] & 1), volumeStatusReady: true} :
+          {displayMode: frame[2] <= 2 ? frame[2] : 0, displayModeReady: true, videoFlags:frame[3]&7})
+      };
+      if (frame[1] === 0x86 && nextState.displayMode === pendingDisplayMode) {
+        pendingDisplayMode = null;
+        clearTimeout(displayModeTimer);
+      }
+      rxFrameCount++;
+      lastRxAt = Date.now();
+      received = true;
+      if (rxFrameCount === 1) {
+        els.statusPill.textContent = '已连接 · 有回传';
+        els.deviceHint.textContent = 'FPGA 状态已收到 · 控制链路可检查';
+      }
+      const changed = Object.keys(nextState).some(key => nextState[key] !== state[key]);
+      state = nextState;
+      if (changed) {
+        log(frame[1] === 0x81 ? `RX ${hex(frame)} · 当前第${state.current || 0}张`
+          : frame[1] === 0x82 ? `RX ${hex(frame)} · 亮度${state.brightness}级 对比度${state.contrast}级 转场${['直切','淡入淡出','滑动'][state.effect]}`
+          : frame[1] === 0x83 ? `RX ${hex(frame)} · ${state.noticeShow ? '通知显示中' : '通知已清除'}`
+          : frame[1] === 0x84 ? `RX ${hex(frame)} · 尺寸${['640×480','512×384','320×240'][state.size]} 比例${['原始','4:3','16:9','1:1'][state.aspect]}`
+          : frame[1] === 0x85 ? `RX ${hex(frame)} · 曲目${state.track}/${state.trackCount} ${state.playing ? '播放' : '暂停'}`
+          : frame[1] === 0x87 ? `RX ${hex(frame)} · 音量${state.volume * 10}% ${state.muted ? '静音' : '有声'}`
+          : `RX ${hex(frame)} · HDMI ${['图片与音乐','摄像头','TF卡视频'][state.displayMode] || '未知模式'}`);
+        needsRender = true;
+      } else if (frame[1] === 0x86) needsRender = true;
+    }
+    if (received) {
+      updateLinkHealth();
+      const now = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+      els.statusPill.title = `已接收 ${rxFrameCount} 帧，最后接收 ${now}`;
+    }
+    if (needsRender) render();
+  }
+
+  async function sendCommand(command, argument = 0) {
+    const frame = Uint8Array.of(0xA5, command, argument, 0xA5 ^ command ^ argument);
+    if (demoMode) {
+      log(`演示 TX ${hex(frame)}`);
+      if (command === 0x02 && argument >= 1 && argument <= state.count) {
+        state.current = argument; state.auto = false;
+      } else if (command === 0x03) state.auto = true;
+      else if (command === 0x06) state.auto = false;
+      else if (command === 0x07) state.effect = argument;
+      else if (command === 0x13) state.effect = (state.effect + 1) % 3;
+      else if (command === 0x08) state.brightness = argument;
+      else if (command === 0x14) state.brightness = Math.min(9, state.brightness + 1);
+      else if (command === 0x15) state.brightness = Math.max(0, state.brightness - 1);
+      else if (command === 0x09) state.contrast = argument;
+      else if (command === 0x16) state.contrast = Math.min(9, state.contrast + 1);
+      else if (command === 0x17) state.contrast = Math.max(0, state.contrast - 1);
+      else if (command === 0x0B) state.size = argument;
+      else if (command === 0x18) state.size = (state.size + 1) % 3;
+      else if (command === 0x0C) state.aspect = argument;
+      else if (command === 0x19) state.aspect = (state.aspect + 1) % 4;
+      else if (command === 0x0D && (state.trackMap & (1 << (argument - 1)))) state.track = argument;
+      else if ((command === 0x11 || command === 0x12) && state.trackMap) {
+        const tracks = Array.from({length: 16}, (_, i) => i + 1)
+          .filter(i => state.trackMap & (1 << (i - 1)));
+        const index = tracks.indexOf(state.track);
+        state.track = tracks[index < 0 ? 0 :
+          (index + (command === 0x12 ? 1 : -1) + tracks.length) % tracks.length];
+      }
+      else if (command === 0x0E) state.playing = !!argument;
+      else if (command === 0x1C) state.playing = !state.playing;
+      else if (command === 0x0F) state.lyricEnabled = !!argument;
+      else if (command === 0x1A) state.lyricEnabled = !state.lyricEnabled;
+      else if (command === 0x10) state.titleEnabled = !!argument;
+      else if (command === 0x1E) state.spectrumEnabled = !!argument;
+      else if (command === 0x20) { state.volume = argument; state.muted = false; }
+      else if (command === 0x21) { state.volume = Math.min(10, state.volume + 1); state.muted = false; }
+      else if (command === 0x22) { state.volume = Math.max(0, state.volume - 1); state.muted = false; }
+      else if (command === 0x23) state.muted = !!argument;
+      else if (command === 0x24) state.muted = !state.muted;
+      else if (command === 0x1F) state.spectrumEnabled = !state.spectrumEnabled;
+      else if (command === 0x1B) state.titleEnabled = !state.titleEnabled;
+      else if (command === 0x0A) state.noticeShow = false;
+      else if (command === 0x1D && (argument === 0 || argument === 1 || argument === 2)) {
+        state.displayMode = argument;
+        state.displayModeReady = true;
+        pendingDisplayMode = null;
+      }
+      else if ((command === 0x04 || command === 0x05) && state.count) {
+        const images = Array.from({length: Math.min(state.count, 16)}, (_, i) => i + 1)
+          .filter(i => !state.map || (state.map & (1 << (i - 1))));
+        const index = images.indexOf(state.current);
+        if (images.length) state.current = images[index < 0 ? 0 :
+          (index + (command === 0x04 ? 1 : -1) + images.length) % images.length];
+        state.auto = false;
+      }
+      render();
+      return true;
+    }
+    if (!isReady()) { log('未连接 W02，命令未发送'); showToast('请先连接 W02 蓝牙模块'); render(); return false; }
+    try {
+      const characteristic = writeCharacteristic;
+      writeQueue = writeQueue.catch(() => {}).then(async () => {
+        if (!device?.gatt?.connected || characteristic !== writeCharacteristic)
+          throw new Error('蓝牙连接已断开');
+        if (characteristic.properties.writeWithoutResponse)
+          await characteristic.writeValueWithoutResponse(frame);
+        else
+          await characteristic.writeValue(frame);
+      });
+      await writeQueue;
+      log(`TX ${hex(frame)}`);
+      if (command !== 0x01) showToast('指令已发送，等待设备回传');
+      return true;
+    } catch (error) {
+      log(`发送失败：${error.message}`);
+      showToast('发送失败，请检查蓝牙连接');
+      render();
+      return false;
+    }
+  }
+
+  async function sendDisplayMode(mode) {
+    if (mode !== 0 && mode !== 1 && mode !== 2) return false;
+    const requestId = ++displayModeRequestId;
+    const connectionToken = linkToken;
+    clearTimeout(displayModeTimer);
+    pendingDisplayMode = mode;
+    render();
+    const sent = await sendCommand(0x1D, mode);
+    if (requestId !== displayModeRequestId || connectionToken !== linkToken) return false;
+    if (!sent) {
+      pendingDisplayMode = null;
+      render();
+      return false;
+    }
+    if (!demoMode && pendingDisplayMode !== null) {
+      displayModeTimer = setTimeout(() => {
+        if (requestId !== displayModeRequestId || connectionToken !== linkToken ||
+            pendingDisplayMode === null) return;
+        pendingDisplayMode = null;
+        log('画面切换未获确认，请检查 FPGA 回传后重试');
+        render();
+      }, 4000);
+      await sendCommand(0x01, 0);
+    }
+    return true;
+  }
+  function voiceNumber(value) {
+    if (!value) return NaN;
+    if (/^\d+$/.test(value)) return Number(value);
+    const digits = '〇一二三四五六七八九';
+    const clean = value.replace(/[零两]/g, match => match === '两' ? '二' : '〇');
+    if (clean === '十') return 10;
+    if (clean.startsWith('十')) return 10 + digits.indexOf(clean[1]);
+    if (clean.includes('十')) {
+      const [tens, ones] = clean.split('十');
+      return digits.indexOf(tens) * 10 + (ones ? digits.indexOf(ones) : 0);
+    }
+    return digits.indexOf(clean);
+  }
+
+  function parseVoiceCommand(utterance) {
+    if (typeof utterance !== 'string') return null;
+    let text = utterance.replace(/[\s，。！？、,.!?：:；;]/g, '').replace(/幺/g, '一');
+    if (voiceCommandCatalog.has(text)) return voiceCommandCatalog.get(text);
+    // Prefer a complete phrase after each possible wake prefix, so the
+    // assistant's name inside a phrase is not accidentally stripped too.
+    for (const prefix of ['你好', '你好小美', '小美']) {
+      if (!text.startsWith(prefix)) continue;
+      const candidate = text.slice(prefix.length).replace(/(?:好不好|好吗|吧)$/, '');
+      if (voiceCommandCatalog.has(candidate)) return voiceCommandCatalog.get(candidate);
+    }
+    text = text.replace(/^(?:你好小美|小美|你好)/, '');
+    text = text.replace(/(?:好不好|好吗|吧)$/, '');
+    if (voiceCommandCatalog.has(text)) return voiceCommandCatalog.get(text);
+    text = text.replace(/^(?:麻烦你|麻烦|请|帮我|给我)+/, '');
+    text = text.replace(/(?:好不好|好吗|吧)$/, '');
+    if (/不要|别|不用|不想|不能|不许|不可以|不要再/.test(text)) return null;
+    const numbered = '[0-9〇零一二两三四五六七八九十]{1,3}';
+    if (!text) return null;
+    if (voiceCommandCatalog.has(text)) return voiceCommandCatalog.get(text);
+    if (/^(播放视频|打开视频|视频模式|播放戒不掉)$/.test(text)) return {command:0x1D,argument:2,label:'播放TF卡视频'};
+    if (/^(显示|打开|查看).*(摄像头页面|摄像头控制页面)/.test(text))
+      return { page: 'camera', label: '打开摄像头页面' };
+    if (/打开摄像头|开启摄像头|显示摄像头|看摄像头|查看实时画面|实时预览|摄像头模式|切换到摄像头|切换摄像头|切到摄像头/.test(text))
+      return { command: 0x1D, argument: 1, label: '显示摄像头画面' };
+    if (/停止视频|关闭视频|退出视频|关闭摄像头|退出摄像头|返回图片音乐|回到图片音乐|显示图片音乐|图片音乐模式|切换到图片模式|切回图片模式|返回相册|相册模式/.test(text))
+      return { command: 0x1D, argument: 0, label: '显示图片与音乐' };
+    if (/^(显示|打开|查看).*(图片属性|图像属性|画面属性)/.test(text))
+      return { page: 'images', label: '打开图片属性' };
+    if (/^(显示|打开|查看).*(音乐页面|歌曲列表)/.test(text))
+      return { page: 'music', label: '打开音乐页面' };
+    if (/^(显示|打开|查看).*(语音页面|语音控制)/.test(text))
+      return { page: 'voice', label: '打开语音页面' };
+    if (/刷新|查询|当前状态|设备状态|检查设备连接|设备在线吗/.test(text))
+      return { command: 0x01, argument: 0, label: '刷新设备状态' };
+    if (/上一张|前一张|上一幅|前一幅|前张图片|换上一张|图片往前翻/.test(text))
+      return { command: 0x05, argument: 0, label: '上一张图片' };
+    if (/下一张|后一张|下一幅|后一幅|下张图片|换一张图片|换个风景|图片往后翻/.test(text))
+      return { command: 0x04, argument: 0, label: '下一张图片' };
+    if (/自动(播放|轮播|切图|切换|模式)|开始轮播|继续轮播|让图片自己播放/.test(text))
+      return { command: 0x03, argument: 0, label: '自动轮播' };
+    if (/手动(播放|切图|切换|模式)|停止轮播|我自己切图片/.test(text))
+      return { command: 0x06, argument: 0, label: '手动切图' };
+    const image = text.match(new RegExp(`(?:第(${numbered})张|图片(?:第)?(${numbered})(?:张)?|切换到第(${numbered})张)`));
+    if (image) {
+      const n = voiceNumber(image[1] || image[2] || image[3]);
+      return { command: 0x02, argument: n, label: `切换到第${n}张图片`, kind: 'image' };
+    }
+    const song = songNames.findIndex(name => text.includes(name));
+    if (song >= 0)
+      return { command: 0x0D, argument: song + 1, label: `播放${songNames[song]}`, kind: 'track' };
+    if (/上一首|前一首|上首歌/.test(text))
+      return { command: 0x11, argument: 0, label: '上一首歌曲' };
+    if (/下一首|后一首|下首歌|换首歌听听/.test(text))
+      return { command: 0x12, argument: 0, label: '下一首歌曲' };
+    const track = text.match(new RegExp(`(?:第(${numbered})首|(?:播放|选择|切换到)(?:曲目|歌曲)(${numbered}))`));
+    if (track) {
+      const n = voiceNumber(track[1] || track[2]);
+      return { command: 0x0D, argument: n, label: `播放第${n}首歌曲`, kind: 'track' };
+    }
+    if (/播放或暂停|切换播放状态|音乐暂停或继续/.test(text))
+      return { command: 0x1C, argument: 0, label: '切换播放状态' };
+    if (/歌词/.test(text)) {
+      if (/切换歌词/.test(text))
+        return { command: 0x1A, argument: 0, label: '切换歌词显示' };
+      const enabled = /关闭|取消|隐藏|不显示/.test(text) ? 0 :
+        /打开|开启|显示/.test(text) ? 1 : Number(!state.lyricEnabled);
+      return { command: 0x0F, argument: enabled, label: enabled ? '显示歌词' : '隐藏歌词' };
+    }
+    if (/歌名|歌曲标题/.test(text)) {
+      if (/切换歌名/.test(text))
+        return { command: 0x1B, argument: 0, label: '切换歌名显示' };
+      const enabled = /关闭|取消|隐藏|不显示/.test(text) ? 0 :
+        /打开|开启|显示/.test(text) ? 1 : Number(!state.titleEnabled);
+      return { command: 0x10, argument: enabled, label: enabled ? '显示歌名' : '隐藏歌名' };
+    }
+    if (/暂停|停止音乐|停止播放/.test(text))
+      return { command: 0x0E, argument: 0, label: '暂停音乐' };
+    if (/继续播放|播放音乐|开始播放|恢复播放|来点音乐/.test(text))
+      return { command: 0x0E, argument: 1, label: '播放音乐' };
+    const bright = /亮度|调亮|调暗|图片亮|图片暗|画面亮|再亮|再暗|最亮|最暗/.test(text);
+    const contrast = /对比度/.test(text);
+    if (bright || contrast) {
+      const name = bright ? '亮度' : '对比度';
+      const command = bright ? 0x08 : 0x09;
+      if (/最高|最亮|亮起来/.test(text))
+        return { command, argument: 9, label: `${name}调到最高` };
+      if (/最低|最暗/.test(text))
+        return { command, argument: 0, label: `${name}调到最低` };
+      const absolute = text.match(new RegExp(`(?:调到|设为|设置为|设置|为)(${numbered})(?:级|档)?`));
+      if (absolute) {
+        const n = voiceNumber(absolute[1]);
+        return { command, argument: n, label: `${name}调到${n}级`, kind: 'level' };
+      }
+      if (/调高|提高|增加|加亮|亮一点|再亮|升一级|高一点|调亮/.test(text))
+        return { command: bright ? 0x14 : 0x16, argument: 0, label: `${name}提高一级` };
+      if (/调低|降低|减少|调暗|暗一点|再暗|降一级|低一点/.test(text))
+        return { command: bright ? 0x15 : 0x17, argument: 0, label: `${name}降低一级` };
+      const direct = text.match(new RegExp(`(?:亮度|对比度)(${numbered})(?:级|档)?`));
+      if (direct) {
+        const n = voiceNumber(direct[1]);
+        return { command, argument: n, label: `${name}调到${n}级`, kind: 'level' };
+      }
+    }
+    if (/切换转场|换一种转场|换个转场|换个过渡效果/.test(text))
+      return { command: 0x13, argument: 0, label: '切换转场效果' };
+    if (/关闭转场动画|直接切换/.test(text))
+      return { command: 0x07, argument: 0, label: '转场设为直切' };
+    if (/直切|淡入淡出|滑动/.test(text)) {
+      const effect = text.includes('淡入淡出') ? 1 : text.includes('滑动') ? 2 : 0;
+      return { command: 0x07, argument: effect, label: `转场设为${['直切','淡入淡出','滑动'][effect]}` };
+    }
+    if (/切换图片大小|换一个图片尺寸|换个图片尺寸|切换图片尺寸/.test(text))
+      return { command: 0x18, argument: 0, label: '切换图片尺寸' };
+    if (/尺寸|大小|分辨率|大图|中图|小图|放大|缩小/.test(text)) {
+      const size = /640|六百四十|大图|最大|放大/.test(text) ? 0 :
+        /512|五百一十二|中图|中等/.test(text) ? 1 :
+        /320|三百二十|小图|最小|缩小/.test(text) ? 2 : -1;
+      if (size >= 0) return { command: 0x0B, argument: size,
+        label: `图片尺寸设为${['640×480','512×384','320×240'][size]}` };
+    }
+    if (/切换图片比例|换一个画面比例|换个画面比例|切换画面比例/.test(text))
+      return { command: 0x19, argument: 0, label: '切换图片比例' };
+    if (/比例|画幅|宽高比|四比三|十六比九|一比一|正方形/.test(text)) {
+      const aspect = /原始|默认/.test(text) ? 0 :
+        /16(?:比|:)?9|十六比九|宽屏/.test(text) ? 2 :
+        /4(?:比|:)?3|四比三/.test(text) ? 1 :
+        /1(?:比|:)?1|一比一|正方形/.test(text) ? 3 : -1;
+      if (aspect >= 0) return { command: 0x0C, argument: aspect,
+        label: `图片比例设为${['原始比例','4:3','16:9','1:1'][aspect]}` };
+    }
+    if (/清除通知|取消通知|关闭通知/.test(text))
+      return { command: 0x0A, argument: 0, label: '清除屏幕通知' };
+    return null;
+  }
+
+  function voiceFeedback(message, success = true) {
+    els.voiceFeedback.textContent = message;
+    els.voiceFeedback.style.color = success ? 'var(--cyan)' : 'var(--red)';
+    if (els.voiceSpeakToggle.checked && 'speechSynthesis' in window) {
+      speechSynthesis.cancel();
+      const speech = new SpeechSynthesisUtterance(message);
+      speech.lang = 'zh-CN';
+      speechSynthesis.speak(speech);
+    }
+  }
+
+  function stopVoiceRecognition() {
+    const recognition = voiceRecognition;
+    if (!recognition) return;
+    voiceRecognition = null;
+    voiceListening = false;
+    els.voiceMicBtn.textContent = '🎙 开始聆听';
+    els.voiceMicBtn.classList.remove('listening');
+    els.voiceStatus.textContent = '已停止聆听';
+    try { recognition.abort(); } catch { /* 已自行结束 */ }
+  }
+
+  async function executeVoice(utterance) {
+    const actionSeq = ++voiceActionSeq;
+    els.voiceTranscript.textContent = utterance || '没有识别到内容';
+    const action = parseVoiceCommand(utterance);
+    if (!action) { voiceFeedback('未识别到可执行的指令，请换一种说法', false); return; }
+    if (action.reply) { voiceFeedback(action.reply); return; }
+    if (action.page) { showPage(action.page); voiceFeedback(action.label); return; }
+    if (!isReady()) { voiceFeedback('请先连接 W02 蓝牙模块', false); return; }
+    if (action.command >= 0x20 && action.command <= 0x24 && !state.volumeStatusReady) {
+      voiceFeedback('尚未收到音量控制状态，请下载新版 FPGA 固件后刷新设备', false);
+      return;
+    }
+    if ([0x1E, 0x1F].includes(action.command) && !state.spectrumStatusReady) {
+      voiceFeedback('尚未收到频谱控制状态，请下载新版 FPGA 固件后刷新设备', false);
+      return;
+    }
+    if (state.displayModeReady && state.displayMode !== 0 &&
+        action.command >= 0x02 && action.command <= 0x24 && action.command !== 0x0A && action.command !== 0x1D && !(action.command >= 0x20 && action.command <= 0x24)) {
+      voiceFeedback('当前是摄像头模式，请先说「返回相册」再控制图片和音乐', false);
+      return;
+    }
+    if (!Number.isInteger(action.argument) || action.argument < 0 || action.argument > 255 ||
+        (action.kind === 'level' && action.argument > 9) ||
+        (action.kind === 'image' && (action.argument < 1 || action.argument > 16 ||
+          (state.scanDone && (action.argument > state.count ||
+            (state.map && !(state.map & (1 << (action.argument - 1)))))))) ||
+        (action.kind === 'track' && (action.argument < 1 || action.argument > 16 ||
+          (state.musicStatusReady && !(state.trackMap & (1 << (action.argument - 1))))))) {
+      voiceFeedback('编号无效或当前目录中没有这一项', false);
+      return;
+    }
+    const sent = action.command === 0x1D ? await sendDisplayMode(action.argument) :
+      await sendCommand(action.command, action.argument);
+    if (actionSeq !== voiceActionSeq) return;
+    voiceFeedback(sent ? `${action.label}：${demoMode ? '演示已执行' :
+      rxFrameCount ? '已发往 W02，等待 FPGA 状态' : '已发往 W02，尚无 FPGA 回传'}` :
+      `${action.label}：发送失败，请检查蓝牙连接`, sent);
+  }
+
+  function startVoiceRecognition() {
+    if (!SpeechRecognitionAPI) { voiceFeedback('当前浏览器不支持语音识别，请使用文字指令', false); return; }
+    if (voiceListening) { stopVoiceRecognition(); return; }
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    const recognition = new SpeechRecognitionAPI();
+    voiceRecognition = recognition;
+    let finalHandled = false;
+    recognition.lang = 'zh-CN';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.onstart = () => {
+      if (voiceRecognition !== recognition) return;
+      voiceListening = true;
+      els.voiceMicBtn.textContent = '■ 停止聆听';
+      els.voiceMicBtn.classList.add('listening');
+      els.voiceStatus.textContent = '正在听，请说出一条指令…';
+      els.voiceTranscript.textContent = '正在识别…';
+    };
+    recognition.onresult = event => {
+      if (voiceRecognition !== recognition) return;
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        els.voiceTranscript.textContent = result[0].transcript;
+        if (result.isFinal && !finalHandled) {
+          finalHandled = true;
+          recognition.stop();
+          executeVoice(result[0].transcript);
+          break;
+        }
+      }
+    };
+    recognition.onerror = event => {
+      if (voiceRecognition !== recognition) return;
+      if (event.error === 'aborted') return;
+      const messages = { 'not-allowed': '麦克风权限被拒绝', 'audio-capture': '未找到可用麦克风',
+        'network': '语音识别网络不可用', 'no-speech': '没有听到语音' };
+      voiceFeedback(messages[event.error] || `语音识别失败：${event.error}`, false);
+    };
+    recognition.onend = () => {
+      if (voiceRecognition !== recognition) return;
+      voiceRecognition = null;
+      voiceListening = false;
+      els.voiceMicBtn.textContent = '🎙 开始聆听';
+      els.voiceMicBtn.classList.remove('listening');
+      els.voiceStatus.textContent = '已结束聆听，可再次点击麦克风';
+    };
+    try { voiceListening = true; recognition.start(); }
+    catch (error) {
+      voiceRecognition = null;
+      voiceListening = false;
+      voiceFeedback(`无法启动语音识别：${error.message}`, false);
+    }
+  }
+
+  function renderNoticeBitmap(text) {
+    // Render at 2x first, then convert each 2x2 block to one monochrome pixel.
+    // This keeps small Chinese strokes intact while the FPGA still receives a
+    // crisp 512x16 one-bit bitmap like the fixed bottom logo.
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 32;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.clearRect(0, 0, 1024, 32);
+    ctx.font = 'normal 28px "SimSun", "Songti SC", "Noto Serif CJK SC", serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff';
+    const width = Math.max(8, Math.min(512, Math.ceil(ctx.measureText(text).width / 2) + 4));
+    ctx.fillText(text, 4, 16, 1016);
+    const rgba = ctx.getImageData(0, 0, 1024, 32).data;
+    const bitmap = new Uint8Array(1024);
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 512; x++) {
+        const x2 = x << 1, y2 = y << 1;
+        const p0 = (y2 * 1024 + x2) * 4 + 3;
+        const p1 = p0 + 4;
+        const p2 = p0 + 1024 * 4;
+        const p3 = p2 + 4;
+        const coverage = rgba[p0] + rgba[p1] + rgba[p2] + rgba[p3];
+        if (coverage >= 320)
+          bitmap[y * 64 + (x >> 3)] |= 1 << (7 - (x & 7));
+      }
+    }
+    return { bitmap, width };
+  }
+
+  async function writeBulk(bytes, characteristic = writeCharacteristic, connectionToken = linkToken) {
+    const checkConnection = () => {
+      if (!characteristic || !device?.gatt?.connected || connectionToken !== linkToken ||
+          characteristic !== writeCharacteristic) throw new Error('蓝牙连接已断开');
+    };
+    checkConnection();
+    const totalChunks = Math.ceil(bytes.length / 20);
+    for (let offset = 0, chunkNo = 0; offset < bytes.length; offset += 20) {
+      checkConnection();
+      const chunk = bytes.slice(offset, offset + 20);
+      if (characteristic.properties.writeWithoutResponse)
+        await characteristic.writeValueWithoutResponse(chunk);
+      else
+        await characteristic.writeValue(chunk);
+      checkConnection();
+      chunkNo++;
+      if ((chunkNo & 7) === 0 || chunkNo === totalChunks)
+        els.noticeProgress.textContent = `正在发送通知 ${Math.round(chunkNo * 100 / totalChunks)}%`;
+      await new Promise(resolve => setTimeout(resolve, 30));
+    }
+    checkConnection();
+  }
+
+  async function sendNotice() {
+    if (noticeSending) return;
+    const text = els.noticeInput.value.trim();
+    if (!text) return alert('请先输入通知内容');
+    if (!isReady()) { log('未连接 W02，通知未发送'); return; }
+    const urgent = Number(els.noticeType.value) & 1;
+    const speed = Number(els.noticeSpeed.value) & 3;
+    const duration = Number(els.noticeDuration.value) & 3;
+    if (demoMode) {
+      Object.assign(state, { noticeShow: true, noticeUrgent: !!urgent,
+        noticeSpeed: speed, noticeDuration: duration, noticeWidth: text.length * 16 });
+      log(`演示通知 · ${text}`);
+      render();
+      return;
+    }
+    // Capture the connection when enqueuing, before another transfer can
+    // delay this job across a disconnect/reconnect.
+    const characteristic = writeCharacteristic;
+    const connectionToken = linkToken;
+    const { bitmap, width } = renderNoticeBitmap(text);
+    const flags = 1 | (urgent << 1) | (speed << 2) | (duration << 4);
+    const frame = new Uint8Array(1029);
+    frame[0] = 0xA6;
+    frame[1] = flags;
+    frame[2] = width & 0xFF;
+    frame[3] = (width >> 8) & 0x03;
+    frame.set(bitmap, 4);
+    let checksum = 0;
+    for (let i = 0; i < 1028; i++) checksum ^= frame[i];
+    frame[1028] = checksum;
+    noticeSending = true;
+    updateAvailability();
+    try {
+      writeQueue = writeQueue.catch(() => {}).then(() => writeBulk(frame, characteristic, connectionToken));
+      await writeQueue;
+      if (connectionToken !== linkToken) return;
+      els.noticeProgress.textContent = '通知已发送，等待FPGA确认…';
+      log(`TX A6通知 · ${text} · ${width}px · ${urgent ? '紧急' : '普通'}`);
+      await new Promise(resolve => setTimeout(resolve, 250));
+      if (connectionToken !== linkToken) return;
+      if (!await sendCommand(0x01, 0)) throw new Error('状态刷新失败');
+    } catch (error) {
+      if (connectionToken !== linkToken) return;
+      els.noticeProgress.textContent = `通知发送失败：${error.message}`;
+      log(`通知发送失败：${error.message}`);
+    } finally {
+      noticeSending = false;
+      updateAvailability();
+    }
+  }
+
+  async function connectDevice(target, automatic = false) {
+    if (connectionPending) return;
+    stopVoiceRecognition();
+    connectionPending = true;
+    try {
+      const token = ++linkToken;
+      const serviceUuid = els.serviceUuid.value.trim();
+      rxBuffer = [];
+      rxFrameCount = 0;
+      pendingDisplayMode = null;
+      demoMode = false;
+      if (notifyCharacteristic) notifyCharacteristic.oncharacteristicvaluechanged = null;
+      writeCharacteristic = notifyCharacteristic = null;
+      state = emptyState();
+      device = target;
+      render();
+      device.ongattserverdisconnected = () => {
+        if (device !== target) return;
+        ++linkToken;
+        rxBuffer = [];
+        rxFrameCount = 0;
+        pendingDisplayMode = null;
+        if (notifyCharacteristic) notifyCharacteristic.oncharacteristicvaluechanged = null;
+        writeCharacteristic = notifyCharacteristic = null;
+        state = emptyState();
+        setConnected(false, device?.name || '已绑定W02');
+        els.connectBtn.textContent = '重新连接';
+        els.deviceHint.textContent = '已绑定设备 · 点击重新连接';
+        log('蓝牙已断开');
+        render();
+      };
+      els.connectBtn.disabled = true;
+      els.connectBtn.textContent = '连接中…';
+      els.deviceName.textContent = device.name || '已绑定BLE设备';
+      els.deviceHint.textContent = automatic ? '正在自动连接已绑定设备' : '正在建立BLE连接';
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService(serviceUuid);
+      writeCharacteristic = await service.getCharacteristic(els.writeUuid.value.trim());
+      notifyCharacteristic = await service.getCharacteristic(els.notifyUuid.value.trim());
+      await notifyCharacteristic.startNotifications();
+      notifyCharacteristic.oncharacteristicvaluechanged = event => {
+        const value = event.target.value;
+        parseIncoming(new Uint8Array(value.buffer, value.byteOffset, value.byteLength));
+      };
+      saveDeviceId(device.id);
+      setConnected(true, device.name || 'W02蓝牙模块');
+      els.connectBtn.textContent = '断开BLE';
+      els.deviceHint.textContent = 'BLE 已连接 · 等待 FPGA 状态';
+      render();
+      log(`${automatic ? '自动连接' : '连接'}成功：${device.name || '未命名设备'}`);
+      await new Promise(resolve => setTimeout(resolve, 250));
+      await sendCommand(0x01, 0);
+      setTimeout(() => {
+        if (linkToken === token && device === target && target.gatt.connected && rxFrameCount === 0 && !demoMode) {
+          els.statusPill.textContent = '已连接 · 无回传';
+          els.deviceHint.textContent = 'W02 已连接，FPGA 未回传：核对 bit、TX/RX 接线和 9600 波特率';
+          log('4 秒内未收到 FPGA 状态帧；BLE 连接本身不代表串口已通');
+        }
+      }, 4000);
+    } catch (error) {
+      if (notifyCharacteristic) notifyCharacteristic.oncharacteristicvaluechanged = null;
+      writeCharacteristic = notifyCharacteristic = null;
+      if (target.gatt?.connected) {
+        target.ongattserverdisconnected = null;
+        target.gatt.disconnect();
+      }
+      state = emptyState();
+      log(`${automatic ? '自动连接' : '连接'}失败：${error.message}`);
+      setConnected(false, target?.name || '已绑定W02');
+      els.connectBtn.textContent = automatic ? '重新连接' : '扫描BLE';
+      els.deviceHint.textContent = automatic ? '已绑定设备 · 点击重新连接' : '点击扫描附近BLE设备';
+      render();
+    } finally {
+      connectionPending = false;
+      els.connectBtn.disabled = false;
+      updateAvailability();
+    }
+  }
+
+  async function connectBluetooth() {
+    if (connectionPending || selectingDevice) return;
+    if (device?.gatt?.connected) {
+      device.gatt.disconnect();
+      return;
+    }
+    if (!navigator.bluetooth) {
+      alert('当前浏览器不支持Web Bluetooth。Android请使用Chrome并通过HTTPS打开。');
+      return;
+    }
+    selectingDevice = true;
+    updateAvailability();
+    try {
+      const boundId = savedDeviceId();
+      if (boundId && navigator.bluetooth.getDevices) {
+        const permitted = await navigator.bluetooth.getDevices();
+        const bound = permitted.find(item => item.id === boundId);
+        if (bound) { await connectDevice(bound); return; }
+      }
+      const selected = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [els.serviceUuid.value.trim()] }],
+        optionalServices: [els.serviceUuid.value.trim()]
+      });
+      await connectDevice(selected);
+    } catch (error) {
+      log(`扫描或选择设备失败：${error.message}`);
+      els.connectBtn.textContent = '扫描BLE';
+    } finally {
+      selectingDevice = false;
+      updateAvailability();
+    }
+  }
+
+  async function autoReconnectBoundDevice() {
+    if (demoMode || connectionPending || selectingDevice || device?.gatt?.connected) return;
+    if (!navigator.bluetooth?.getDevices) return;
+    const boundId = savedDeviceId();
+    if (!boundId) return;
+    selectingDevice = true;
+    updateAvailability();
+    try {
+      const permitted = await navigator.bluetooth.getDevices();
+      const bound = permitted.find(item => item.id === boundId);
+      if (bound) await connectDevice(bound, true);
+    } catch (error) {
+      log(`自动连接暂不可用：${error.message}`);
+    } finally {
+      selectingDevice = false;
+      updateAvailability();
+    }
+  }
+
+  els.connectBtn.onclick = connectBluetooth;
+  els.voiceMicBtn.onclick = startVoiceRecognition;
+  els.voiceTextBtn.onclick = () => executeVoice(els.voiceTextInput.value.trim());
+  els.voiceTextInput.onkeydown = event => {
+    if (event.key === 'Enter') executeVoice(els.voiceTextInput.value.trim());
+  };
+  document.querySelectorAll('[data-voice-example]').forEach(button =>
+    button.onclick = () => executeVoice(button.dataset.voiceExample));
+  if (!SpeechRecognitionAPI)
+    els.voiceStatus.textContent = '当前浏览器不支持语音识别，可使用下方文字指令';
+  function showPage(page, updateHash = true) {
+    const name = ['overview', 'images', 'music', 'camera', 'voice', 'commands', 'notice', 'settings'].includes(page) ? page : 'overview';
+    document.querySelectorAll('.page').forEach(section =>
+      section.classList.toggle('active', section.dataset.page === name));
+    document.querySelectorAll('.nav-btn').forEach(button => {
+      const active = button.dataset.page === (name === 'commands' ? 'voice' : name);
+      button.classList.toggle('active', active);
+      if (active) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
+    });
+    if (updateHash && location.hash !== `#${name}`) history.pushState(null, '', `#${name}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.querySelectorAll('.nav-btn, [data-go]').forEach(button =>
+    button.addEventListener('click', () => showPage(button.dataset.page || button.dataset.go)));
+  window.addEventListener('hashchange', () => showPage(location.hash.slice(1), false));
+  window.addEventListener('popstate', () => showPage(location.hash.slice(1), false));
+  showPage(location.hash.slice(1) || 'overview', false);
+  els.queryBtn.onclick = () => sendCommand(0x01, 0);
+  document.querySelectorAll('[data-display-mode]').forEach(button =>
+    button.onclick = () => sendDisplayMode(Number(button.dataset.displayMode)));
+  // 指定当前图片同样会进入手动模式，并兼容尚未重新编译的旧FPGA bit。
+  els.manualBtn.onclick = () => sendCommand(0x06, 0);
+  els.autoBtn.onclick = () => sendCommand(0x03, 0);
+  document.querySelectorAll('.effect-btn').forEach(button => {
+    button.onclick = () => sendCommand(0x07, Number(button.dataset.effect));
+  });
+  els.brightnessRange.oninput = () => els.brightnessValue.textContent = `${els.brightnessRange.value}级`;
+  els.brightnessRange.onchange = () => sendCommand(0x08, Number(els.brightnessRange.value));
+  els.contrastRange.oninput = () => els.contrastValue.textContent = `${els.contrastRange.value}级`;
+  els.contrastRange.onchange = () => sendCommand(0x09, Number(els.contrastRange.value));
+  els.sizeSelect.onchange = () => sendCommand(0x0B, Number(els.sizeSelect.value));
+  els.aspectSelect.onchange = () => sendCommand(0x0C, Number(els.aspectSelect.value));
+  function adjacentTrack(direction) {
+    const tracks = Array.from({length: 16}, (_, i) => i + 1)
+      .filter(i => state.trackMap & (1 << (i - 1)));
+    if (!tracks.length) return;
+    const index = tracks.indexOf(state.track);
+    const target = index < 0 ? tracks[0] :
+      tracks[(index + direction + tracks.length) % tracks.length];
+    sendCommand(0x0D, target);
+  }
+  els.musicPrevBtn.onclick = () => adjacentTrack(-1);
+  els.musicNextBtn.onclick = () => adjacentTrack(1);
+  els.musicPlayBtn.onclick = () => sendCommand(0x0E, !state.musicStatusReady || !state.playing ? 1 : 0);
+  els.lyricToggleBtn.onclick = () => sendCommand(0x0F, state.lyricEnabled ? 0 : 1);
+  els.videoVolumeRange.oninput = () => els.videoVolumeValue.textContent = `${Number(els.videoVolumeRange.value) * 10}%`;
+  els.videoVolumeRange.onchange = async () => { await sendCommand(0x20, Number(els.videoVolumeRange.value)); render(); };
+  els.videoVolumeDown.onclick = () => sendCommand(0x22,0);
+  els.videoVolumeUp.onclick = () => sendCommand(0x21,0);
+  els.videoMuteBtn.onclick = () => sendCommand(0x23,state.muted ? 0 : 1);
+  els.volumeRange.oninput = () => els.volumeValue.textContent = `${Number(els.volumeRange.value) * 10}%`;
+  els.volumeRange.onchange = async () => { await sendCommand(0x20, Number(els.volumeRange.value)); render(); };
+  els.muteBtn.onclick = () => sendCommand(0x23, state.muted ? 0 : 1);
+  els.spectrumToggleBtn.onclick = () => sendCommand(0x1E, state.spectrumEnabled ? 0 : 1);
+  els.titleToggleBtn.onclick = () => sendCommand(0x10, state.titleEnabled ? 0 : 1);
+  els.sendNoticeBtn.onclick = sendNotice;
+  els.clearNoticeBtn.onclick = () => sendCommand(0x0A, 0);
+  els.forgetBtn.onclick = () => {
+    try { localStorage.removeItem(BOUND_DEVICE_KEY); }
+    catch { log('浏览器未保存设备绑定'); }
+    ++linkToken;
+    rxBuffer = [];
+    rxFrameCount = 0;
+    pendingDisplayMode = null;
+    if (notifyCharacteristic) notifyCharacteristic.oncharacteristicvaluechanged = null;
+    if (device) device.ongattserverdisconnected = null;
+    if (device?.gatt?.connected) device.gatt.disconnect();
+    device = null;
+    writeCharacteristic = notifyCharacteristic = null;
+    demoMode = false;
+    state = emptyState();
+    setConnected(false, 'W02 蓝牙模块');
+    els.deviceHint.textContent = '绑定已解除 · 点击扫描BLE';
+    els.connectBtn.textContent = '扫描BLE';
+    log('已解除当前蓝牙绑定');
+    render();
+  };
+  els.nextBtn.onclick = () => sendCommand(0x04, 0);
+  els.prevBtn.onclick = () => sendCommand(0x05, 0);
+  els.demoBtn.onclick = () => {
+    stopVoiceRecognition();
+    ++linkToken;
+    rxBuffer = [];
+    rxFrameCount = 0;
+    pendingDisplayMode = null;
+    if (notifyCharacteristic) notifyCharacteristic.oncharacteristicvaluechanged = null;
+    if (device) device.ongattserverdisconnected = null;
+    if (device?.gatt?.connected) device.gatt.disconnect();
+    device = null;
+    writeCharacteristic = notifyCharacteristic = null;
+    demoMode = true;
+    state = { count: 7, current: 1, auto: true, scanDone: true, map: 0x007F,
+      brightness: 9, contrast: 5, effect: 0, size: 0, aspect: 0,
+      track: 1, trackCount: songNames.length, trackMap: (1 << songNames.length) - 1, playing: true,
+      lyricEnabled: true, titleEnabled: true, lyricValid: true, titleValid: true,
+      spectrumEnabled: true, spectrumStatusReady: true,
+      volume: 10, muted: false, volumeStatusReady: true,
+      musicStatusReady: true, displayMode: 0, displayModeReady: true,
+      noticeShow: false, noticeUrgent: false,
+      noticeSpeed: 1, noticeDuration: 0, noticeWidth: 0 };
+    setConnected(true, '演示设备', true);
+    els.connectBtn.textContent = '连接真实设备';
+    els.deviceHint.textContent = '本地演示 · 未连接硬件';
+    log('已开启演示模式');
+    render();
+  };
+  let toastTimer;
+  function showToast(message) {
+    const toast = $('actionToast');
+    clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.hidden = false;
+    toastTimer = setTimeout(() => { toast.hidden = true; }, 3000);
+  }
+
+  function updateLinkHealth() {
+    const health = $('linkHealth'), text = $('linkHealthText');
+    const seconds = Math.max(0, Math.floor((Date.now() - lastRxAt) / 1000));
+    health.dataset.state = demoMode ? 'live' : !isReady() ? 'idle' : !rxFrameCount ? 'waiting' : seconds > 5 ? 'stale' : 'live';
+    text.textContent = demoMode ? '演示数据 · 未连接硬件' : !isReady() ? '连接设备后查看实时状态' :
+      !rxFrameCount ? '蓝牙已连接 · 等待 FPGA 数据回传' :
+      seconds > 5 ? `${seconds} 秒未收到更新 · 显示的是最后已知状态` : '设备状态实时同步中';
+  }
+
+  const commandGroups = {images:'图片切换',music:'音乐播放',camera:'摄像头',properties:'图像属性',local:'问答与趣味',status:'设备状态'};
+  function commandGroup(action) {
+    if (action.reply) return 'local';
+    if (action.command === 0x1D) return 'camera';
+    if (action.command === 0x01) return 'status';
+    if ([0x02,0x03,0x04,0x05,0x06].includes(action.command)) return 'images';
+    if ([0x0D,0x0E,0x0F,0x10,0x11,0x12,0x1A,0x1B,0x1C,0x1E,0x1F,0x20,0x21,0x22,0x23,0x24].includes(action.command)) return 'music';
+    return 'properties';
+  }
+  let commandLimit = 18;
+  function renderCommandLibrary() {
+    const query = $('commandSearch').value.trim().toLowerCase();
+    const category = $('commandCategory').value;
+    const entries = [...voiceCommandCatalog].filter(([phrase, action]) =>
+      (category === 'all' || commandGroup(action) === category) &&
+      (phrase + (action.reply || '')).toLowerCase().includes(query));
+    const list = $('commandLibrary');
+    list.replaceChildren();
+    for (const [phrase, action] of entries.slice(0, commandLimit)) {
+      const button = document.createElement('button');
+      button.className = 'command-item'; button.type = 'button';
+      button.textContent = phrase;
+      const hint = document.createElement('small');
+      hint.textContent = `${commandGroups[commandGroup(action)]} · 点击填入`;
+      button.appendChild(hint);
+      button.onclick = () => {
+        $('voiceTextInput').value = phrase;
+        showPage('voice');
+        $('voiceTextInput').focus({preventScroll:true});
+        showToast('已填入短句，点击「执行指令」确认');
+      };
+      list.appendChild(button);
+    }
+    if (!entries.length) {
+      const empty = document.createElement('p');
+      empty.className = 'empty'; empty.textContent = '没有找到匹配指令，试试其他关键词';
+      list.appendChild(empty);
+    }
+    $('commandCount').textContent = `已显示 ${Math.min(commandLimit, entries.length)} / ${entries.length} 条`;
+    $('commandMore').hidden = commandLimit >= entries.length;
+  }
+  $('commandSearch').oninput = $('commandCategory').onchange = () => { commandLimit = 18; renderCommandLibrary(); };
+  $('commandMore').onclick = () => { commandLimit += 18; renderCommandLibrary(); };
+  $('healthRefreshBtn').onclick = () => sendCommand(0x01, 0);
+  document.querySelectorAll('[data-quick-command]').forEach(button =>
+    button.onclick = () => sendCommand(Number(button.dataset.quickCommand), 0));
+  renderCommandLibrary();
+  render();
+  setInterval(() => { if (!document.hidden) updateLinkHealth(); }, 1000);
+  setTimeout(autoReconnectBoundDevice, 350);
+</script>
+</body>
+</html>
